@@ -2,8 +2,8 @@ import 'phaser'
 import MainScene from './scenes/mainScene'
 import PreloadScene from './scenes/preloadScene'
 
-const DEFAULT_WIDTH = 1300
-const DEFAULT_HEIGHT = 1300
+export const DEFAULT_WIDTH = 1300
+export const DEFAULT_HEIGHT = 1300
 
 const config = {
   type: Phaser.AUTO,
