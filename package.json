@@ -2,10 +2,14 @@
   "name": "js-hackathon-2023",
   "version": "1.0.0",
   "description": "Tupiki js-hackathon-2023",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "build": "webpack --config webpack/prod.js ",
-    "start": "webpack-dev-server --config webpack/base.js --open"
+    "start": "webpack serve --config webpack/webpack.dev.js",
+    "build": "rimraf dist && webpack --config webpack/webpack.prod.js",
+    "bundle": "npm run build",
+    "serve": "serve dist",
+    "format": "prettier --check src/scripts/**",
+    "format:write": "prettier --write src/scripts/**"
   },
   "repository": {
     "type": "git",
@@ -17,21 +21,24 @@
     "url": "https://github.com/atlanticPuffin23/js-hackathon-2023/issues"
   },
   "homepage": "https://github.com/atlanticPuffin23/js-hackathon-2023#readme",
-  "devDependencies": {
-    "@babel/core": "^7.7.2",
-    "@babel/preset-env": "^7.7.1",
-    "babel-loader": "^8.0.6",
-    "clean-webpack-plugin": "^3.0.0",
-    "file-loader": "^4.2.0",
-    "html-webpack-plugin": "^3.2.0",
-    "raw-loader": "^3.1.0",
-    "terser-webpack-plugin": "^2.2.1",
-    "webpack": "^4.41.2",
-    "webpack-cli": "^3.3.10",
-    "webpack-dev-server": "^3.9.0",
-    "webpack-merge": "^4.2.2"
-  },
   "dependencies": {
-    "phaser": "^3.50.0"
+    "phaser": "^3.55.2"
+  },
+  "devDependencies": {
+    "@yandeu/prettier-config": "^0.0.3",
+    "copy-webpack-plugin": "^10.1.0",
+    "html-webpack-plugin": "^5.5.0",
+    "javascript-obfuscator": "^4.0.0",
+    "prettier": "^2.5.1",
+    "rimraf": "^3.0.2",
+    "serve": "^14.1.2",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.5.3",
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.6.0",
+    "webpack-merge": "^5.8.0",
+    "webpack-obfuscator": "^3.5.0",
+    "workbox-webpack-plugin": "^6.4.2"
   }
 }
