@@ -1,6 +1,6 @@
 # Atlantic Puffin Battle City Game
 
-This is a browser-based implementation of the classic Atlantic Puffin Battle City game. It is built using Node.js, TypeScript, and Phaser 3.
+This is a browser-based implementation of the classic Battle City game. It is built using Node.js, TypeScript, and Phaser 3.
 
 ## Installation
 
