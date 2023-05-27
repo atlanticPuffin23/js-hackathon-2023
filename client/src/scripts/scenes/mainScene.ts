@@ -49,7 +49,7 @@ export default class MainScene extends Phaser.Scene {
   private currentPlayer: Phaser.Physics.Arcade.Sprite;
   private otherPlayer: Phaser.Physics.Arcade.Sprite;
 
-  private bullets: Array<Phaser.Physics.Arcade.Sprite> = [];
+  private bullets: Phaser.Physics.Arcade.Group;
 
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceBar: Phaser.Input.Keyboard.Key;
@@ -84,6 +84,10 @@ export default class MainScene extends Phaser.Scene {
 
     this.cement = this.physics.add.sprite(300, 580, 'cement');
     this.cement.setImmovable(true);
+
+    this.bullets = this.physics.add.group({
+      classType: Phaser.Physics.Arcade.Sprite
+    });
     
     socket.on('currentPlayers', (players: Players) => {
       console.log('players', players);
@@ -166,7 +170,7 @@ export default class MainScene extends Phaser.Scene {
   addBullet(bulletInfo: BulletInfo) {
     const { playerId, x, y, direction, rotation, isTankMoved } = bulletInfo;
     
-    const bullet = this.physics.add.sprite(x, y, 'bullet');
+    const bullet: Phaser.Physics.Arcade.Image = this.bullets.get(x, y, 'bullet');
     bullet.setVisible(true);
     bullet.rotation = rotation;
     bullet.setData('direction', direction);
@@ -174,8 +178,13 @@ export default class MainScene extends Phaser.Scene {
     bullet.setData('start_y', y);
     bullet.setData('playerId', playerId);
     bullet.setData('isTankMoved', isTankMoved);
-    
-    this.bullets.push(bullet);
+
+    if (bullet.getData('playerId') === socket.id) {
+      this.physics.add.overlap(bullet, this.otherPlayer, () => {
+        console.log('overlap bullet + other player')
+        socket.emit('playerDied', {playerId: socket.id, deadPlayerId: this.otherPlayer.getData('playerId')})
+      });
+    }
   }
 
   update() {
@@ -184,8 +193,9 @@ export default class MainScene extends Phaser.Scene {
       if (!this.hasAddedCollider) {
         this.currentPlayer.setPushable(false);
         this.otherPlayer.setPushable(false);
-        
+
         this.physics.add.collider(this.currentPlayer, this.otherPlayer);
+
         this.hasAddedCollider = true;
       }
 
@@ -198,7 +208,8 @@ export default class MainScene extends Phaser.Scene {
         this.shootBullet();
       }
 
-      this.bullets.forEach((bullet) => {
+      // @ts-ignore
+      this.bullets.getChildren().forEach((bullet: Phaser.Physics.Arcade.Sprite) => {
         this.moveBullet(bullet);
       });
     }
@@ -262,7 +273,7 @@ export default class MainScene extends Phaser.Scene {
     const bulletDirection: Direction = this.currentPlayer.getData('direction');
 
     const bulletInfo = {
-      playerId: this.currentPlayer.getData('playerId'),
+      playerId: socket.id,
       x: this.currentPlayer.x,
       y: this.currentPlayer.y,
       direction: bulletDirection,

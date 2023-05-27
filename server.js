@@ -95,12 +95,12 @@ socket.on('startNewGame', ()=> {
     io.emit('bulletFired', bulletInfo);
   })
   
-  socket.on('playerDied', function (playerId, deadPlayerId) {
+  socket.on('playerDied', function ({ playerId, deadPlayerId }) {
     gameState.players[deadPlayerId].status = 'dead';
     gameState.winnerId = playerId;
     gameState.gameStatus = 'ended';
 
-    socket.emit('gameOver',  gameState.winnerId)
+    io.emit('gameOver',  gameState.winnerId)
   });
   
   socket.on('startOver', function () {
