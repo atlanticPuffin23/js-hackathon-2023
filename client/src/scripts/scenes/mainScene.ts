@@ -264,9 +264,8 @@ export default class MainScene extends Phaser.Scene {
         this.otherPlayer.setPushable(false);
 
         this.physics.add.collider(this.currentPlayer, this.otherPlayer);
-        // TODO: double check this logic
         this.physics.add.collider(this.currentPlayer, this.waterGroup, () => {
-          socket.emit('playerDied', {playerId: socket.id, deadPlayerId: this.otherPlayer.getData('playerId')})
+          socket.emit('playerDied', {playerId: this.otherPlayer.getData('playerId'), deadPlayerId: socket.id})
         });
 
         this.hasAddedCollider = true;
