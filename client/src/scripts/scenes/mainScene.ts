@@ -181,26 +181,21 @@ export default class MainScene extends Phaser.Scene {
       if (this.currentPlayer.x - this.distanceToBorder > 0) {
         this.currentPlayer.x -= this.speed;
       }
-    }
-
-    if (this.cursors.right.isDown) {
+    } else if (this.cursors.right.isDown) {
       this.currentPlayer.rotation = this.rightDirectionRotation;
       this.currentPlayer.setData('direction', Direction.right);
 
       if (this.currentPlayer.x + this.distanceToBorder < DEFAULT_WIDTH) {
         this.currentPlayer.x += this.speed;
       }
-    }
-
-    if (this.cursors.up.isDown) {
+    } else if (this.cursors.up.isDown) {
       this.currentPlayer.rotation = this.upDirectionRotation;
       this.currentPlayer.setData('direction', Direction.up);
 
       if (this.currentPlayer.y - this.distanceToBorder > 0) {
         this.currentPlayer.y -= this.speed;
       }
-    }
-    if (this.cursors.down.isDown) {
+    } else if (this.cursors.down.isDown) {
       this.currentPlayer.rotation = this.downDirectionRotation;
       this.currentPlayer.setData('direction', Direction.down);
 
