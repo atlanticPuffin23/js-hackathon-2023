@@ -23,14 +23,6 @@ type GameState = {
         lives: number,
         direction: 'up' | 'down' | 'left' | 'right',
         status: 'active' | 'hit' | 'dead',
-        activeShots: Array<{
-          playerId: string,
-          position: {
-            x: number,
-            y: number,
-          },
-          direction: 'up' | 'down' | 'left' | 'right',
-        }>,
       },
     },
     obstacles: Array<{x: number, y: number}>,
@@ -41,6 +33,7 @@ type GameState = {
 const initialGameState = {
     gameStatus: 'waiting',
     players: {},
+    activeShots: {},
     obstacles: [],
     winnerId: null,
 };
@@ -66,8 +59,7 @@ io.on('connection', function (socket) {
       },
       lives: 3,
       direction: 'up',
-      status: 'active',
-      activeShots: [],
+      status: 'active'
     };
     
     // if (Object.keys(gameState.players).length === 2) {
@@ -82,6 +74,7 @@ io.on('connection', function (socket) {
   }
 
   // TODO: split into separate events (gameStatus)
+
   socket.emit('currentPlayers', gameState.players);
   socket.broadcast.emit('playerConnected', gameState.players[socket.id]);
  
@@ -102,6 +95,10 @@ io.on('connection', function (socket) {
     gameState.players[socket.id].rotation = movementData.rotation
 
     socket.broadcast.emit('playerMoved', gameState.players[socket.id])
+  })
+  
+  socket.on('bulletShoot', function (bulletInfo) {
+    io.emit('bulletFired', bulletInfo);
   })
   
   socket.on('playerDied', function (playerId, deadPlayerId) {

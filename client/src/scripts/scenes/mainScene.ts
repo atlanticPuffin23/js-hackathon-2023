@@ -1,6 +1,13 @@
 import { DEFAULT_HEIGHT, DEFAULT_WIDTH } from '../game';
 import { socket } from './preloadScene';
 
+enum Direction {
+  up = 'up',
+  down = 'down',
+  right = 'right',
+  left = 'left',
+}
+
 type Player = {
   playerId: string,
   position: {
@@ -11,18 +18,19 @@ type Player = {
   lives: number,
   direction: Direction,
   status: 'active' | 'hit' | 'dead',
-  activeShots: Array<{
-    playerId: string,
-    position: {
-      x: number,
-      y: number,
-    },
-    direction: Direction,
-  }>,
 };
 
 type Players = {
   [playerId: string]: Player,
+};
+
+type BulletInfo = {
+  playerId: string,
+  x: number,
+  y: number,
+  direction: Direction,
+  rotation: number,
+  visible: boolean,
 };
 
 type GameState = {
@@ -32,13 +40,6 @@ type GameState = {
     winnerId: string | null,
 };
 
-enum Direction {
-  up = 'up',
-  down = 'down',
-  right = 'right',
-  left = 'left',
-}
-
 export default class MainScene extends Phaser.Scene {
   private speed = 5;
   private distanceToBorder = 25;
@@ -47,7 +48,7 @@ export default class MainScene extends Phaser.Scene {
   private currentPlayer: Phaser.GameObjects.Sprite;
   private otherPlayers: Array<Phaser.GameObjects.Sprite> = [];
 
-  private bullet: Phaser.GameObjects.Sprite;
+  private bullets: Array<Phaser.GameObjects.Sprite> = [];
 
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceBar: Phaser.Input.Keyboard.Key;
@@ -70,8 +71,6 @@ export default class MainScene extends Phaser.Scene {
   }
 
   create() { 
-    this.gameStatus = this.add.text(10, 10, '', {color: '#ff0000'})
-
     socket.on('currentPlayers', (players: Players) => {
       console.log('players', players);
 
@@ -100,6 +99,8 @@ export default class MainScene extends Phaser.Scene {
         }
       });
     });
+
+    socket.on('bulletFired', (bulletInfo: BulletInfo) => this.addBullet(bulletInfo));
     
     socket.on("playerDisconnected", (playerId) => {
       this.otherPlayers.forEach((otherPlayer) => {
@@ -132,10 +133,6 @@ export default class MainScene extends Phaser.Scene {
     this.currentPlayer.rotation = position.rotation;
     this.currentPlayer.setData('direction', Direction.up);
 
-    // Create the bullet sprite
-    this.bullet = this.add.sprite(0, 0, 'bullet');
-    this.bullet.setVisible(false); // Hide the bullet initially
-
     this.distanceToBorder = this.currentPlayer.width / 2;
   }
 
@@ -152,6 +149,20 @@ export default class MainScene extends Phaser.Scene {
     this.otherPlayers.push(otherPlayer);
   }
 
+  addBullet(bulletInfo: BulletInfo) {
+    const { playerId, x, y, direction, rotation } = bulletInfo;
+
+    const bullet = this.add.sprite(x, y, 'bullet');
+    bullet.setVisible(true);
+    bullet.rotation = rotation;
+    bullet.setData('direction', direction);
+    bullet.setData('start_x', x);
+    bullet.setData('start_y', y);
+    bullet.setData('playerId', playerId);
+
+    this.bullets.push(bullet);
+  }
+
   update() {
     if (this.currentPlayer) {
       this.moveTank();
@@ -162,7 +173,10 @@ export default class MainScene extends Phaser.Scene {
       ) {
         this.shootBullet();
       }
-      this.moveBullet();
+
+      this.bullets.forEach((bullet) => {
+        this.moveBullet(bullet);
+      });
     }
   }
 
@@ -218,69 +232,76 @@ export default class MainScene extends Phaser.Scene {
   }
 
   shootBullet() {
-    if (!this.bullet.visible) {
-      this.bullet.setPosition(this.currentPlayer.x, this.currentPlayer.y);
-      this.bullet.setVisible(true);
-      const direction: Direction = this.currentPlayer.getData('direction');
-      this.bullet.rotation = this.getRotationValue(direction);
-      this.bullet.setData('direction', direction);
-      this.bullet.setData('start_x', this.currentPlayer.x);
-      this.bullet.setData('start_y', this.currentPlayer.y);
-    }
+    const bulletDirection: Direction = this.currentPlayer.getData('direction');
+
+    const bulletInfo = {
+      playerId: this.currentPlayer.getData('playerId'),
+      x: this.currentPlayer.x,
+      y: this.currentPlayer.y,
+      direction: bulletDirection,
+      rotation: this.getRotationValue(bulletDirection),
+      visible: true,
+    };
+
+    socket.emit('bulletShoot', bulletInfo);
   }
 
-  moveBullet() {
-    if (this.bullet.visible) {
-      switch (this.bullet.getData('direction')) {
+  moveBullet(bullet: Phaser.GameObjects.Sprite) {
+    if (bullet.visible) {
+      switch (bullet.getData('direction')) {
         case Direction.up: {
           if (
-            this.bullet.getData('start_y') - this.bullet.y ===
+            bullet.getData('start_y') - bullet.y ===
             this.normalRangeOfProjectile
           ) {
-            this.stopShooting();
+            bullet.setPosition(0, 0);
+            bullet.setVisible(false);
             return;
           }
-          this.bullet.y -= this.speed;
+          bullet.y -= this.speed;
           break;
         }
         case Direction.down: {
           if (
-            this.bullet.y - this.bullet.getData('start_y') ===
+            bullet.y - bullet.getData('start_y') ===
             this.normalRangeOfProjectile
           ) {
-            this.stopShooting();
+            bullet.setPosition(0, 0);
+            bullet.setVisible(false);
             return;
           }
-          this.bullet.y += this.speed;
+          bullet.y += this.speed;
           break;
         }
         case Direction.left: {
           if (
-            this.bullet.getData('start_x') - this.bullet.x ===
+            bullet.getData('start_x') - bullet.x ===
             this.normalRangeOfProjectile
           ) {
-            this.stopShooting();
+            bullet.setPosition(0, 0);
+            bullet.setVisible(false);
           }
-          this.bullet.x -= this.speed;
+          bullet.x -= this.speed;
           break;
         }
         case Direction.right: {
           if (
-            this.bullet.x - this.bullet.getData('start_x') ===
+            bullet.x - bullet.getData('start_x') ===
             this.normalRangeOfProjectile
           ) {
-            this.stopShooting();
+            bullet.setPosition(0, 0);
+            bullet.setVisible(false);
             return;
           }
-          this.bullet.x += this.speed;
+          bullet.x += this.speed;
           break;
         }
       }
     }
   }
 
-  stopShooting() {
-    this.bullet.setPosition(0, 0);
-    this.bullet.setVisible(false);
-  }
+  // stopShooting() {
+  //   this.bullet.setPosition(0, 0);
+  //   this.bullet.setVisible(false);
+  // }
 }
