@@ -70,6 +70,12 @@ const waterPositions = [
   { x: 762, y: 1260 },
   { x: 681, y: 1260 },
   { x: 600, y: 1260 },
+
+  {x: 140, y: 1080},
+  {x: 220, y: 1080},
+  {x: 300, y: 1080},
+  {x: 380, y: 1080},
+  {x: 460, y: 1080},
 ];
 
 const currentPlayerLivesPosition = {x: 40, y: 60}
