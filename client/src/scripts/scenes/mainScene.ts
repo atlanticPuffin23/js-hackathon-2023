@@ -11,6 +11,11 @@ enum Direction {
 
 type Player = {
   playerId: string;
+  initialPosition: {
+    x: number;
+    y: number;
+    rotation: number;
+  };
   position: {
     x: number;
     y: number;
@@ -191,6 +196,23 @@ export default class MainScene extends Phaser.Scene {
         this.otherPlayer.destroy();
       }
     });
+    
+    socket.on('livesChanged', ({playerId, lives}) => {
+      if(playerId === socket.id){
+        this.currentPlayer.setData('lives', lives);
+        this.currentPlayer.setPosition(this.currentPlayer.getData('initial_x'),this.currentPlayer.getData('initial_y'));
+
+        this.currentPlayerLives.forEach((live)=> { live.destroy() });
+        this.drawLives( this.currentPlayer , this.currentPlayerLives, currentPlayerLivesPosition);
+      } else {
+        this.otherPlayer.setData('lives', lives);
+        this.otherPlayer.setPosition(this.otherPlayer.getData('initial_x'),this.otherPlayer.getData('initial_y')); 
+        
+        this.otherPlayerLives.forEach((live)=> { live.destroy() });
+        this.drawLives( this.otherPlayer , this.otherPlayerLives, otherPlayerLivesPosition);
+      }
+      
+    })
 
     socket.on('gameOver', ({ winner, loser }) => {
       this.mainSound.stop();
@@ -214,7 +236,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   addPlayer(player) {
-    const { position, lives} = player;
+    const { position, lives, initialPosition} = player;
 
     this.currentPlayer = this.physics.add.sprite(
       position.x,
@@ -223,6 +245,8 @@ export default class MainScene extends Phaser.Scene {
     );
     this.currentPlayer.rotation = position.rotation;
     this.currentPlayer.setData('direction', Direction.up);
+    this.currentPlayer.setData('initial_x', initialPosition.x);
+    this.currentPlayer.setData('initial_y', initialPosition.y);
     this.currentPlayer.setData('lives', lives);
     
     this.distanceToBorder = this.currentPlayer.width / 2;
@@ -234,7 +258,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   addOtherPlayer(player) {
-    const { position, lives} = player;
+    const { position, lives, initialPosition } = player;
     this.otherPlayer = this.physics.add.sprite(
       position.x + 40,
       position.y + 40,
@@ -243,6 +267,8 @@ export default class MainScene extends Phaser.Scene {
 
     this.otherPlayer.rotation = position.rotation;
     this.otherPlayer.setData('playerId', player.playerId);
+    this.otherPlayer.setData('initial_x', initialPosition.x);
+    this.otherPlayer.setData('initial_y', initialPosition.y);
     this.otherPlayer.setData('lives', lives);
     
     this.drawLives(this.otherPlayer , this.otherPlayerLives, otherPlayerLivesPosition);
@@ -266,10 +292,15 @@ export default class MainScene extends Phaser.Scene {
 
     if (bullet.getData('playerId') === socket.id) {
       this.physics.add.overlap(bullet, this.otherPlayer, () => {
-        socket.emit('playerDied', {
+        console.log('overlap', this.otherPlayer.getData('lives'))
+        if(this.otherPlayer.getData('lives') > 1){
+          socket.emit('playerHitted', this.otherPlayer.getData('playerId'));
+        } else {    
+          socket.emit('playerDied', {
           playerId: socket.id,
           deadPlayerId: this.otherPlayer.getData('playerId'),
         });
+      }
       });
     }
   }

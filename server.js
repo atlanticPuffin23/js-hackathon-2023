@@ -32,6 +32,10 @@ socket.on('startNewGame', ()=> {
     case 0:
       gameState.players[socket.id] = {
         playerId: socket.id,
+        initialPosition: {
+          x: 100,
+          y: 140,
+        },
         position: {
           x: 100,
           y: 140,
@@ -45,6 +49,10 @@ socket.on('startNewGame', ()=> {
     case 1:
       gameState.players[socket.id] = {
         playerId: socket.id,
+        initialPosition: {
+          x: 1200,
+          y: 1200,
+        },
         position: {
           x: 1200,
           y: 1200,
@@ -67,11 +75,7 @@ socket.on('startNewGame', ()=> {
   socket.on('disconnect', function () {
     delete gameState.players[socket.id];
     console.log('player [' + socket.id + '] disconnected');
-    // if (Object.keys(gameState.players).length === 1) {
-    //   gameState.gameStatus = 'ended';
-    //   gameState.winnerId = Object.keys(gameState.players)[0];
-    // };
-
+    
     io.emit('playerDisconnected', socket.id);
   });
 
@@ -95,8 +99,15 @@ socket.on('startNewGame', ()=> {
     gameState.winnerId = playerId;
     gameState.gameStatus = 'ended';
 
-    io.emit('gameOver', gameState.winnerId);
+    io.emit('gameOver', {winner: gameState.winnerId, loser: deadPlayerId});
   });
+  
+  socket.on('playerHitted', function(playerId){
+    gameState.players[playerId].status = 'hit';
+    gameState.players[playerId].lives -= 1;
+
+    io.emit('livesChanged', {playerId, lives: gameState.players[playerId].lives})
+   });
 
   socket.on('startOver', function () {
     gameState = { ...initialGameState, players: {} };
