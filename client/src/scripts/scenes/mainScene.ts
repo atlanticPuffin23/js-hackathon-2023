@@ -21,11 +21,13 @@ type Player = {
   }>,
 };
 
+type Players = {
+  [playerId: string]: Player,
+};
+
 type GameState = {
     gameStatus: 'waiting' | 'countdown' | 'in-progress' | 'ended',
-    players: {
-      [playerId: string]: Player,
-    },
+    players: Players,
     obstacles: Array<{x: number, y: number}>,
     winnerId: string | null,
 };
@@ -70,10 +72,8 @@ export default class MainScene extends Phaser.Scene {
   create() { 
     this.gameStatus = this.add.text(10, 10, '', {color: '#ff0000'})
 
-    socket.on('gameState', (gameState: GameState) => {
-      const { players } = gameState;
-      this.gameStatus.setText(gameState.gameStatus);
-      console.log('gameState', gameState, gameState.players);
+    socket.on('currentPlayers', (players: Players) => {
+      console.log('players', players);
 
       Object.keys(players).forEach((playerId) => {
         const player = players[playerId];
@@ -87,7 +87,9 @@ export default class MainScene extends Phaser.Scene {
     });
 
     socket.on("playerConnected", (player) => {
-      this.addOtherPlayers(player);
+      if (player) {
+        this.addOtherPlayers(player);
+      }
     });
 
     socket.on("playerMoved", (playerInfo) => {
