@@ -22,7 +22,7 @@ export default class GameOverScene extends Phaser.Scene {
     this.startOverText.setInteractive();
     
     this.startOverText.on('pointerdown',  () => {
-      socket.emit('startNewGame');
+      socket.emit('startOver');
       
       this.scene.start('PreloadScene');
     })
