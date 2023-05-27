@@ -13,7 +13,11 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js']
   },
   module: {
-    rules: [{ test: /\.tsx?$|\.jsx?$/, include: path.join(__dirname, '../src'), loader: 'ts-loader' }]
+    rules: [{ test: /\.tsx?$|\.jsx?$/, include: path.join(__dirname, '../src'), loader: 'ts-loader' }, 
+    {
+      test: /\.css$/i,
+      use: ['style-loader', 'css-loader'],
+    },]
   },
   optimization: {
     splitChunks: {
