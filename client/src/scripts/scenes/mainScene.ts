@@ -108,6 +108,10 @@ export default class MainScene extends Phaser.Scene {
         }
       });
     });
+    
+    socket.on('gameOver', (winnerId) => {
+      this.scene.start('GameOverScene', {winnerId});
+    })
 
     // Enable keyboard input
     if (this.input.keyboard) {
