@@ -9,32 +9,9 @@ const io = require('socket.io')(http, {
 
 const PORT = 3001;
 
-/*
-type GameState = {
-    gameStatus: 'waiting' | 'countdown' | 'in-progress' | 'ended',
-    players: {
-      [playerId: string]: {
-        playerId: string,
-        position: {
-          x: number,
-          y: number,
-          rotation: number,
-        },
-        lives: number,
-        direction: 'up' | 'down' | 'left' | 'right',
-        status: 'active' | 'hit' | 'dead',
-      },
-    },
-    obstacles: Array<{x: number, y: number}>,
-    winnerId: string | null,
-};
-*/
-
 const initialGameState = {
     gameStatus: 'waiting',
     players: {},
-    activeShots: {},
-    obstacles: [],
     winnerId: null,
 };
   
@@ -80,21 +57,6 @@ socket.on('startNewGame', ()=> {
     default:
       gameState.gameStatus = 'in-progress';
   }
-  // if (Object.keys(gameState.players).length < 2) {
-  //   gameState.players[socket.id] = {
-  //     playerId: socket.id,
-  //     position: {
-  //       x: 100,
-  //       y: 100,
-  //       rotation: 0,
-  //     },
-  //     lives: 3,
-  //     direction: 'up',
-  //     status: 'active'
-  //   };
-  // } else {
-  //   gameState.gameStatus = 'in-progress';
-  // }
 
   socket.emit('currentPlayers', gameState.players);
   socket.broadcast.emit('playerConnected', gameState.players[socket.id]);
@@ -128,7 +90,10 @@ socket.on('startNewGame', ()=> {
     gameState.winnerId = playerId;
     gameState.gameStatus = 'ended';
 
-    io.emit('gameOver',  gameState.winnerId)
+    io.emit('gameOver', {
+      winner: playerId,
+      loser: deadPlayerId,
+    })
   });
   
   socket.on('startOver', function () {

@@ -145,6 +145,7 @@ export default class MainScene extends Phaser.Scene {
 
     grassPositions.forEach(pos => {
       let grass = this.physics.add.sprite(pos.x, pos.y, 'grass');
+      grass.setDepth(10);
       this.grassGroup.add(grass);
     });
 
@@ -197,8 +198,8 @@ export default class MainScene extends Phaser.Scene {
       }
     });
     
-    socket.on('gameOver', (winnerId) => {
-      this.scene.start('GameOverScene', {winnerId});
+    socket.on('gameOver', ({ winner, loser }) => {
+      this.scene.start('GameOverScene', { winner, loser });
     })
 
     // Enable keyboard input
