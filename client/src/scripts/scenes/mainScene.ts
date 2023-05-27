@@ -34,12 +34,6 @@ type BulletInfo = {
   isTankMoved: boolean,
 };
 
-type GameState = {
-    gameStatus: 'waiting' | 'countdown' | 'in-progress' | 'ended',
-    players: Players,
-    obstacles: Array<{x: number, y: number}>,
-    winnerId: string | null,
-};
 
 const cementPositions = [
   { x: 200, y: 700 },
@@ -47,7 +41,7 @@ const cementPositions = [
   { x: 500, y: 500 },
   { x: 1200, y: 400 },
   { x: 250, y: 1200 },
-  { x: 950, y: 1150 },
+  { x: 924, y: 1179 },
   { x: 400, y: 800 },
   { x: 700, y: 100 },
   { x: 1100, y: 900 },
@@ -62,7 +56,9 @@ const grassPositions = [
   { x: 650, y: 200 },
   { x: 450, y: 1000 },
   { x: 1050, y: 1100 },
-  { x: 950, y: 1200 },
+  { x: 924, y: 1260 },
+  { x: 1005, y: 1260 },
+  { x: 1005, y: 1179 },
   { x: 1150, y: 300 },
 ];
 
@@ -71,16 +67,15 @@ const waterPositions = [
   { x: 460, y: 40 },
   { x: 380, y: 40 },
   { x: 300, y: 40 },
-  { x: 820, y: 1260 },
-  { x: 760, y: 1260 },
-  { x: 680, y: 1260 },
+  { x: 843, y: 1260 },
+  { x: 762, y: 1260 },
+  { x: 681, y: 1260 },
   { x: 600, y: 1260 },
 ];
 
 export default class MainScene extends Phaser.Scene {
   private speed = 5;
   private distanceToBorder = 25;
-  private gameStatus: Phaser.GameObjects.Text;
 
   private currentPlayer: Phaser.Physics.Arcade.Sprite;
   private otherPlayer: Phaser.Physics.Arcade.Sprite;
@@ -425,9 +420,4 @@ export default class MainScene extends Phaser.Scene {
       }
     }
   }
-
-  // stopShooting() {
-  //   this.bullet.setPosition(0, 0);
-  //   this.bullet.setVisible(false);
-  // }
 }
