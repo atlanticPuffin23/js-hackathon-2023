@@ -80,7 +80,7 @@ export default class MainScene extends Phaser.Scene {
   create() { 
     this.physics.world.setBounds(0, 0, DEFAULT_HEIGHT, DEFAULT_HEIGHT);
 
-    socket.emit('startMewGame');
+    socket.emit('startNewGame');
 
     this.cement = this.physics.add.sprite(300, 580, 'cement');
     this.cement.setImmovable(true);
@@ -120,6 +120,10 @@ export default class MainScene extends Phaser.Scene {
         this.otherPlayer.destroy();
       }
     });
+    
+    socket.on('gameOver', (winnerId) => {
+      this.scene.start('GameOverScene', {winnerId});
+    })
 
     // Enable keyboard input
     if (this.input.keyboard) {

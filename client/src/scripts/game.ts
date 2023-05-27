@@ -1,4 +1,5 @@
 import 'phaser'
+import GameOverScene from './scenes/gameOverScene'
 import MainScene from './scenes/mainScene'
 import PreloadScene from './scenes/preloadScene'
 import GuidelineScene from './scenes/guidelineScene'
@@ -23,7 +24,7 @@ const config = {
       debug: true
     },
   },
-  scene: [PreloadScene, MainScene, GuidelineScene],
+  scene: [PreloadScene, MainScene, GuidelineScene, GameOverScene],
 }
 
 window.addEventListener('load', () => {

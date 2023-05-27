@@ -49,7 +49,7 @@ server.get('/', (req, res) => {
 io.on('connection', function (socket) {
   console.log('player [' + socket.id + '] connected')
   
-socket.on('startMewGame', ()=> {
+socket.on('startNewGame', ()=> {
  
   if (Object.keys(gameState.players).length < 2) {
     gameState.players[socket.id] = {
@@ -75,7 +75,7 @@ socket.on('startMewGame', ()=> {
   socket.on('disconnect', function () {
     delete gameState.players[socket.id];
     console.log('player [' + socket.id + '] disconnected');
-    // if (Object.keys(gameState.players).length === 1) {
+  // if (Object.keys(gameState.players).length === 1) {
     //   gameState.gameStatus = 'ended';
     //   gameState.winnerId = Object.keys(gameState.players)[0];
     // };
@@ -90,10 +90,23 @@ socket.on('startMewGame', ()=> {
 
     socket.broadcast.emit('playerMoved', gameState.players[socket.id])
   })
-
+  
   socket.on('bulletShoot', function (bulletInfo) {
     io.emit('bulletFired', bulletInfo);
   })
+  
+  socket.on('playerDied', function (playerId, deadPlayerId) {
+    gameState.players[deadPlayerId].status = 'dead';
+    gameState.winnerId = playerId;
+    gameState.gameStatus = 'ended';
+
+    socket.emit('gameOver',  gameState.winnerId)
+  });
+  
+  socket.on('startOver', function () {
+    gameState = { ...initialGameState };
+  });
+  
 });
 
 http.listen(PORT, function () {
