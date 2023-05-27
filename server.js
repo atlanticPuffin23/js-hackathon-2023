@@ -25,45 +25,45 @@ server.get('/', (req, res) => {
 });
 
 io.on('connection', function (socket) {
-  console.log('player [' + socket.id + '] connected');
+  console.log('player [' + socket.id + '] connected')
+  
+socket.on('startNewGame', ()=> {
+  switch (Object.keys(gameState.players).length) {
+    case 0:
+      gameState.players[socket.id] = {
+        playerId: socket.id,
+        position: {
+          x: 100,
+          y: 140,
+          rotation: 0,
+        },
+        lives: 3,
+        direction: 'up',
+        status: 'active'
+      };
+      break;
+    case 1:
+      gameState.players[socket.id] = {
+        playerId: socket.id,
+        position: {
+          x: 1200,
+          y: 1200,
+          rotation: 0,
+        },
+        lives:   3,
+        direction: 'down',
+        status: 'active'
+      };
+      io.emit('startCompetition');
+      break;
+    default:
+      gameState.gameStatus = 'in-progress';
+  }
 
-  socket.on('startNewGame', () => {
-    switch (Object.keys(gameState.players).length) {
-      case 0:
-        gameState.players[socket.id] = {
-          playerId: socket.id,
-          position: {
-            x: 100,
-            y: 100,
-            rotation: 0,
-          },
-          lives: 3,
-          direction: 'up',
-          status: 'active',
-        };
-        break;
-      case 1:
-        gameState.players[socket.id] = {
-          playerId: socket.id,
-          position: {
-            x: 1200,
-            y: 1200,
-            rotation: 0,
-          },
-          lives: 3,
-          direction: 'down',
-          status: 'active',
-        };
-        io.emit('startCompetition');
-        break;
-      default:
-        gameState.gameStatus = 'in-progress';
-    }
-
-    socket.emit('currentPlayers', gameState.players);
-    socket.broadcast.emit('playerConnected', gameState.players[socket.id]);
-  });
-
+  socket.emit('currentPlayers', gameState.players);
+  socket.broadcast.emit('playerConnected', gameState.players[socket.id]);
+})
+ 
   socket.on('disconnect', function () {
     delete gameState.players[socket.id];
     console.log('player [' + socket.id + '] disconnected');
