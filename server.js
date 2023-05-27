@@ -54,6 +54,7 @@ io.on('connection', function (socket) {
           direction: 'down',
           status: 'active',
         };
+        io.emit('startCompetition');
         break;
       default:
         gameState.gameStatus = 'in-progress';
@@ -75,6 +76,9 @@ io.on('connection', function (socket) {
   });
 
   socket.on('playerMovement', function (movementData) {
+    if (!gameState.players[socket.id]) {
+      return;
+    }
     gameState.players[socket.id].x = movementData.x;
     gameState.players[socket.id].y = movementData.y;
     gameState.players[socket.id].rotation = movementData.rotation;
@@ -91,10 +95,7 @@ io.on('connection', function (socket) {
     gameState.winnerId = playerId;
     gameState.gameStatus = 'ended';
 
-    io.emit('gameOver', {
-      winner: playerId,
-      loser: deadPlayerId,
-    });
+    io.emit('gameOver', gameState.winnerId);
   });
 
   socket.on('startOver', function () {

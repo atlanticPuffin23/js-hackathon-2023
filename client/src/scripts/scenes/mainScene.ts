@@ -105,6 +105,14 @@ export default class MainScene extends Phaser.Scene {
 
   private hasAddedCollider = false;
 
+  private overlay: Phaser.GameObjects.Rectangle;
+  private overlayText!: Phaser.GameObjects.Text;
+  private countdown: Phaser.Time.TimerEvent | null = null;
+  private countdownDuration: number = 4000;
+  private countdownRemainingTime: number = this.countdownDuration;
+
+  private disabled = true;
+
   constructor() {
     super({ key: 'MainScene' });
   }
@@ -179,6 +187,14 @@ export default class MainScene extends Phaser.Scene {
       }
     });
 
+    socket.on('startCompetition', () => {
+      console.log('startCompetition');
+      if (!this.overlay) {
+        this.addOverlay('');
+      }
+      this.startCountdown();
+    });
+
     socket.on('playerMoved', (playerInfo) => {
       if (playerInfo.playerId === this.otherPlayer?.getData('playerId')) {
         this.otherPlayer.setPosition(playerInfo.x, playerInfo.y);
@@ -214,6 +230,8 @@ export default class MainScene extends Phaser.Scene {
         Phaser.Input.Keyboard.KeyCodes.ENTER
       );
     }
+
+    this.addOverlay('Please wait until another user joins...');
   }
 
   addPlayer(player) {
@@ -271,8 +289,9 @@ export default class MainScene extends Phaser.Scene {
   }
 
   update() {
-    if (this.currentPlayer && this.otherPlayer) {
+    if (this.currentPlayer && this.otherPlayer && !this.disabled) {
       if (!this.hasAddedCollider) {
+        console.log('currentPlayer', this.currentPlayer);
         this.currentPlayer.setPushable(false);
         this.otherPlayer.setPushable(false);
 
@@ -298,7 +317,7 @@ export default class MainScene extends Phaser.Scene {
 
       this.bullets
         .getChildren()
-        // @ts-ignores
+        // @ts-ignore
         .forEach((bullet: Phaser.Physics.Arcade.Sprite) => {
           this.moveBullet(bullet);
         });
@@ -458,8 +477,59 @@ export default class MainScene extends Phaser.Scene {
     }
   }
 
-  // stopShooting() {
-  //   this.bullet.setPosition(0, 0);
-  //   this.bullet.setVisible(false);
-  // }
+  addOverlay(initialText = 'Please, wait...') {
+    this.overlay = this.add.rectangle(
+      DEFAULT_WIDTH / 2,
+      DEFAULT_HEIGHT / 2,
+      DEFAULT_WIDTH,
+      DEFAULT_HEIGHT,
+      0x000000,
+      0.8
+    );
+    this.overlay?.setDepth(10);
+
+    this.overlayText = this.add.text(
+      DEFAULT_WIDTH / 2,
+      DEFAULT_HEIGHT / 2,
+      initialText,
+      {
+        fontFamily: 'VT323',
+        // @ts-ignore
+        fontWeight: 'bold',
+        fontSize: '40px',
+        fill: '#ffffff',
+      }
+    );
+    this.overlayText?.setDepth(11);
+    this.overlayText?.setOrigin(0.5);
+  }
+
+  destroyOverlay() {
+    this.overlay?.destroy();
+    this.overlayText?.destroy();
+    console.log('overlay', this.overlay);
+  }
+
+  startCountdown(initialText = 'Game is about to start...') {
+    this.overlayText?.setText(initialText);
+
+    this.countdown = this.time.addEvent({
+      delay: 1000,
+      callback: this.updateCountdown,
+      callbackScope: this,
+      loop: true,
+    });
+  }
+
+  updateCountdown() {
+    this.countdownRemainingTime -= 1000;
+    const seconds = Math.ceil(this.countdownRemainingTime / 1000);
+    this.overlayText?.setText(seconds.toString());
+
+    if (this.countdownRemainingTime <= 0) {
+      this.destroyOverlay();
+      this.disabled = false;
+      this.countdown?.remove();
+    }
+  }
 }
