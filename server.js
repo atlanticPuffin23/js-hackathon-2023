@@ -82,7 +82,7 @@ io.on('connection', function (socket) {
   }
 
   // TODO: split into separate events (gameStatus)
-  socket.emit('gameState', gameState);
+  socket.emit('currentPlayers', gameState.players);
   socket.broadcast.emit('playerConnected', gameState.players[socket.id]);
  
   socket.on('disconnect', function () {
