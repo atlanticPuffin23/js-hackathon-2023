@@ -9,36 +9,36 @@ enum Direction {
 }
 
 type Player = {
-  playerId: string,
+  playerId: string;
   position: {
-    x: number,
-    y: number,
-    rotation: number,
-  },
-  lives: number,
-  direction: Direction,
-  status: 'active' | 'hit' | 'dead',
+    x: number;
+    y: number;
+    rotation: number;
+  };
+  lives: number;
+  direction: Direction;
+  status: 'active' | 'hit' | 'dead';
 };
 
 type Players = {
-  [playerId: string]: Player,
+  [playerId: string]: Player;
 };
 
 type BulletInfo = {
-  playerId: string,
-  x: number,
-  y: number,
-  direction: Direction,
-  rotation: number,
-  visible: boolean,
-  isTankMoved: boolean,
+  playerId: string;
+  x: number;
+  y: number;
+  direction: Direction;
+  rotation: number;
+  visible: boolean;
+  isTankMoved: boolean;
 };
 
 type GameState = {
-    gameStatus: 'waiting' | 'countdown' | 'in-progress' | 'ended',
-    players: Players,
-    obstacles: Array<{x: number, y: number}>,
-    winnerId: string | null,
+  gameStatus: 'waiting' | 'countdown' | 'in-progress' | 'ended';
+  players: Players;
+  obstacles: Array<{ x: number; y: number }>;
+  winnerId: string | null;
 };
 
 const cementPositions = [
@@ -114,10 +114,10 @@ export default class MainScene extends Phaser.Scene {
     this.load.image('bullet', 'assets/bullet.svg');
     this.load.image('cement', 'assets/texture cement.svg');
     this.load.image('grass', 'assets/texture grass.svg');
-    this.load.image('water', 'assets/texture water.svg')
+    this.load.image('water', 'assets/texture water.svg');
   }
 
-  create() { 
+  create() {
     this.physics.world.setBounds(0, 0, DEFAULT_HEIGHT, DEFAULT_HEIGHT);
 
     socket.emit('startNewGame');
@@ -138,26 +138,26 @@ export default class MainScene extends Phaser.Scene {
       quantity: 10,
     });
 
-    cementPositions.forEach(pos => {
+    cementPositions.forEach((pos) => {
       let cement = this.physics.add.sprite(pos.x, pos.y, 'cement');
       this.cementGroup.add(cement);
     });
 
-    grassPositions.forEach(pos => {
+    grassPositions.forEach((pos) => {
       let grass = this.physics.add.sprite(pos.x, pos.y, 'grass');
       grass.setDepth(10);
       this.grassGroup.add(grass);
     });
 
-    waterPositions.forEach(pos => {
+    waterPositions.forEach((pos) => {
       let water = this.physics.add.sprite(pos.x, pos.y, 'water');
       this.waterGroup.add(water);
     });
 
     this.bullets = this.physics.add.group({
-      classType: Phaser.Physics.Arcade.Sprite
+      classType: Phaser.Physics.Arcade.Sprite,
     });
-    
+
     socket.on('currentPlayers', (players: Players) => {
       console.log('players', players);
 
@@ -168,39 +168,41 @@ export default class MainScene extends Phaser.Scene {
           this.addPlayer(player);
         } else {
           this.addOtherPlayer(player);
-          console.log(this.currentPlayer, this.otherPlayer)
+          console.log(this.currentPlayer, this.otherPlayer);
         }
       });
     });
 
-    socket.on("playerConnected", (player) => {
+    socket.on('playerConnected', (player) => {
       if (player) {
         this.addOtherPlayer(player);
       }
     });
 
-    socket.on("playerMoved", (playerInfo) => {
+    socket.on('playerMoved', (playerInfo) => {
       if (playerInfo.playerId === this.otherPlayer?.getData('playerId')) {
         this.otherPlayer.setPosition(playerInfo.x, playerInfo.y);
         this.otherPlayer.rotation = playerInfo.rotation;
       }
     });
 
-    socket.on('bulletFired', (bulletInfo: BulletInfo) => this.addBullet(bulletInfo));
+    socket.on('bulletFired', (bulletInfo: BulletInfo) =>
+      this.addBullet(bulletInfo)
+    );
 
     this.physics.add.collider(this.bullets, this.cementGroup, (bullet) => {
       bullet.destroy();
     });
 
-    socket.on("playerDisconnected", (playerId) => {
+    socket.on('playerDisconnected', (playerId) => {
       if (playerId === this.otherPlayer?.getData('playerId')) {
         this.otherPlayer.destroy();
       }
     });
-    
+
     socket.on('gameOver', ({ winner, loser }) => {
       this.scene.start('GameOverScene', { winner, loser });
-    })
+    });
 
     // Enable keyboard input
     if (this.input.keyboard) {
@@ -217,12 +219,16 @@ export default class MainScene extends Phaser.Scene {
   addPlayer(player) {
     const { position } = player;
 
-    this.currentPlayer = this.physics.add.sprite(position.x, position.y, 'tank1');
+    this.currentPlayer = this.physics.add.sprite(
+      position.x,
+      position.y,
+      'tank1'
+    );
     this.currentPlayer.rotation = position.rotation;
     this.currentPlayer.setData('direction', Direction.up);
 
     this.distanceToBorder = this.currentPlayer.width / 2;
-    
+
     this.physics.add.collider(this.currentPlayer, this.cementGroup);
   }
 
@@ -231,7 +237,7 @@ export default class MainScene extends Phaser.Scene {
     this.otherPlayer = this.physics.add.sprite(
       position.x + 40,
       position.y + 40,
-      "tank1"
+      'tank1'
     );
 
     this.otherPlayer.rotation = position.rotation;
@@ -240,8 +246,12 @@ export default class MainScene extends Phaser.Scene {
 
   addBullet(bulletInfo: BulletInfo) {
     const { playerId, x, y, direction, rotation, isTankMoved } = bulletInfo;
-    
-    const bullet: Phaser.Physics.Arcade.Image = this.bullets.get(x, y, 'bullet');
+
+    const bullet: Phaser.Physics.Arcade.Image = this.bullets.get(
+      x,
+      y,
+      'bullet'
+    );
     bullet.setVisible(true);
     bullet.rotation = rotation;
     bullet.setData('direction', direction);
@@ -252,28 +262,33 @@ export default class MainScene extends Phaser.Scene {
 
     if (bullet.getData('playerId') === socket.id) {
       this.physics.add.overlap(bullet, this.otherPlayer, () => {
-        socket.emit('playerDied', {playerId: socket.id, deadPlayerId: this.otherPlayer.getData('playerId')})
+        socket.emit('playerDied', {
+          playerId: socket.id,
+          deadPlayerId: this.otherPlayer.getData('playerId'),
+        });
       });
     }
   }
 
   update() {
     if (this.currentPlayer && this.otherPlayer) {
-
       if (!this.hasAddedCollider) {
         this.currentPlayer.setPushable(false);
         this.otherPlayer.setPushable(false);
 
         this.physics.add.collider(this.currentPlayer, this.otherPlayer);
         this.physics.add.collider(this.currentPlayer, this.waterGroup, () => {
-          socket.emit('playerDied', {playerId: this.otherPlayer.getData('playerId'), deadPlayerId: socket.id})
+          socket.emit('playerDied', {
+            playerId: this.otherPlayer.getData('playerId'),
+            deadPlayerId: socket.id,
+          });
         });
 
         this.hasAddedCollider = true;
       }
 
       this.moveTank();
-      
+
       if (
         Phaser.Input.Keyboard.JustDown(this.spaceBar) ||
         Phaser.Input.Keyboard.JustDown(this.enterKey)
@@ -281,10 +296,12 @@ export default class MainScene extends Phaser.Scene {
         this.shootBullet();
       }
 
-      // @ts-ignore
-      this.bullets.getChildren().forEach((bullet: Phaser.Physics.Arcade.Sprite) => {
-        this.moveBullet(bullet);
-      });
+      this.bullets
+        .getChildren()
+        // @ts-ignores
+        .forEach((bullet: Phaser.Physics.Arcade.Sprite) => {
+          this.moveBullet(bullet);
+        });
     }
   }
 
@@ -313,32 +330,36 @@ export default class MainScene extends Phaser.Scene {
       this.currentPlayer.setData('direction', Direction.left);
 
       if (this.currentPlayer.x - this.distanceToBorder > 0) {
-        this.currentPlayer.setVelocityX(-this.speed*50);
+        this.currentPlayer.setVelocityX(-this.speed * 50);
       }
     } else if (this.cursors.right.isDown) {
       this.currentPlayer.rotation = this.rightDirectionRotation;
       this.currentPlayer.setData('direction', Direction.right);
 
       if (this.currentPlayer.x + this.distanceToBorder < DEFAULT_WIDTH) {
-        this.currentPlayer.setVelocityX(this.speed*50);
+        this.currentPlayer.setVelocityX(this.speed * 50);
       }
     } else if (this.cursors.up.isDown) {
       this.currentPlayer.rotation = this.upDirectionRotation;
       this.currentPlayer.setData('direction', Direction.up);
 
       if (this.currentPlayer.y - this.distanceToBorder > 0) {
-        this.currentPlayer.setVelocityY(-this.speed*50);
+        this.currentPlayer.setVelocityY(-this.speed * 50);
       }
     } else if (this.cursors.down.isDown) {
       this.currentPlayer.rotation = this.downDirectionRotation;
       this.currentPlayer.setData('direction', Direction.down);
 
       if (this.currentPlayer.y + this.distanceToBorder < DEFAULT_HEIGHT) {
-        this.currentPlayer.setVelocityY(this.speed*50);
+        this.currentPlayer.setVelocityY(this.speed * 50);
       }
     }
 
-    socket.emit('playerMovement', { x: this.currentPlayer.x, y: this.currentPlayer.y, rotation: this.currentPlayer.rotation });
+    socket.emit('playerMovement', {
+      x: this.currentPlayer.x,
+      y: this.currentPlayer.y,
+      rotation: this.currentPlayer.rotation,
+    });
   }
 
   shootBullet() {
@@ -352,9 +373,13 @@ export default class MainScene extends Phaser.Scene {
       direction: bulletDirection,
       rotation: this.getRotationValue(bulletDirection),
       visible: true,
-      isTankMoved: this.cursors.left.isDown || this.cursors.right.isDown  || this.cursors.up.isDown || this.cursors.down.isDown,
+      isTankMoved:
+        this.cursors.left.isDown ||
+        this.cursors.right.isDown ||
+        this.cursors.up.isDown ||
+        this.cursors.down.isDown,
     };
-    
+
     socket.emit('bulletShoot', bulletInfo);
   }
 
@@ -370,10 +395,17 @@ export default class MainScene extends Phaser.Scene {
 
   moveBullet(bullet: Phaser.GameObjects.Sprite) {
     if (bullet.visible) {
-      const isTankMoved = bullet.getData('isTankMoved') || this.cursors.left.isDown || this.cursors.right.isDown  || this.cursors.up.isDown || this.cursors.down.isDown;
+      const isTankMoved =
+        bullet.getData('isTankMoved') ||
+        this.cursors.left.isDown ||
+        this.cursors.right.isDown ||
+        this.cursors.up.isDown ||
+        this.cursors.down.isDown;
       const bulletMoveSpeed = isTankMoved ? 2 * this.speed : this.speed;
-      const bulletNormalRangeOfProjectile = isTankMoved ? 2 * this.normalRangeOfProjectile : this.normalRangeOfProjectile
-      
+      const bulletNormalRangeOfProjectile = isTankMoved
+        ? 2 * this.normalRangeOfProjectile
+        : this.normalRangeOfProjectile;
+
       switch (bullet.getData('direction')) {
         case Direction.up: {
           if (
