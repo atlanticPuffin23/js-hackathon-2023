@@ -45,14 +45,16 @@ export default class MainScene extends Phaser.Scene {
   private distanceToBorder = 25;
   private gameStatus: Phaser.GameObjects.Text;
 
-  private currentPlayer: Phaser.GameObjects.Sprite;
-  private otherPlayers: Array<Phaser.GameObjects.Sprite> = [];
+  private currentPlayer: Phaser.Physics.Arcade.Sprite;
+  private otherPlayer: Phaser.Physics.Arcade.Sprite;
 
-  private bullets: Array<Phaser.GameObjects.Sprite> = [];
+  private bullets: Array<Phaser.Physics.Arcade.Sprite> = [];
 
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceBar: Phaser.Input.Keyboard.Key;
   private enterKey: Phaser.Input.Keyboard.Key;
+
+  private cement: Phaser.Physics.Arcade.Sprite;
 
   private leftDirectionRotation = Phaser.Math.DegToRad(-90);
   private rightDirectionRotation = Phaser.Math.DegToRad(90);
@@ -68,10 +70,14 @@ export default class MainScene extends Phaser.Scene {
   preload() {
     this.load.image('tank1', 'assets/gold_ukrainian_tank.svg');
     this.load.image('bullet', 'assets/bullet.svg');
+    this.load.image('cement', 'assets/texture cement.svg')
   }
 
   create() { 
     socket.emit('startMewGame');
+
+    this.cement = this.physics.add.sprite(300, 580, 'cement');
+    this.cement.setImmovable(true);
     
     socket.on('currentPlayers', (players: Players) => {
       console.log('players', players);
@@ -82,34 +88,30 @@ export default class MainScene extends Phaser.Scene {
         if (playerId === socket.id) {
           this.addPlayer(player);
         } else {
-          this.addOtherPlayers(player);
+          this.addOtherPlayer(player);
         }
       });
     });
 
     socket.on("playerConnected", (player) => {
       if (player) {
-        this.addOtherPlayers(player);
+        this.addOtherPlayer(player);
       }
     });
 
     socket.on("playerMoved", (playerInfo) => {
-      this.otherPlayers.forEach((otherPlayer) => {
-        if (playerInfo.playerId === otherPlayer.getData('playerId')) {
-          otherPlayer.setPosition(playerInfo.x, playerInfo.y);
-          otherPlayer.rotation = playerInfo.rotation;
-        }
-      });
+      if (playerInfo.playerId === this.otherPlayer?.getData('playerId')) {
+        this.otherPlayer.setPosition(playerInfo.x, playerInfo.y);
+        this.otherPlayer.rotation = playerInfo.rotation;
+      }
     });
 
     socket.on('bulletFired', (bulletInfo: BulletInfo) => this.addBullet(bulletInfo));
-    
+
     socket.on("playerDisconnected", (playerId) => {
-      this.otherPlayers.forEach((otherPlayer) => {
-        if (playerId === otherPlayer.getData('playerId')) {
-          otherPlayer.destroy();
-        }
-      });
+      if (playerId === this.otherPlayer?.getData('playerId')) {
+        this.otherPlayer.destroy();
+      }
     });
 
     // Enable keyboard input
@@ -127,30 +129,33 @@ export default class MainScene extends Phaser.Scene {
   addPlayer(player) {
     const { position } = player;
 
-    this.currentPlayer = this.add.sprite(position.x, position.y, 'tank1');
+    this.currentPlayer = this.physics.add.sprite(position.x, position.y, 'tank1');
     this.currentPlayer.rotation = position.rotation;
     this.currentPlayer.setData('direction', Direction.up);
 
     this.distanceToBorder = this.currentPlayer.width / 2;
+    
+    this.physics.add.collider(this.currentPlayer, this.cement, () => {
+      console.log('collide current player + cement')
+    });
   }
 
-  addOtherPlayers(player) {
+  addOtherPlayer(player) {
     const { position } = player;
-    const otherPlayer = this.add.sprite(
+    this.otherPlayer = this.physics.add.sprite(
       position.x + 40,
       position.y + 40,
       "tank1"
     );
-    otherPlayer.rotation = position.rotation;
-    otherPlayer.setData('playerId', player.playerId);
 
-    this.otherPlayers.push(otherPlayer);
+    this.otherPlayer.rotation = position.rotation;
+    this.otherPlayer.setData('playerId', player.playerId);
   }
 
   addBullet(bulletInfo: BulletInfo) {
     const { playerId, x, y, direction, rotation } = bulletInfo;
 
-    const bullet = this.add.sprite(x, y, 'bullet');
+    const bullet = this.physics.add.sprite(x, y, 'bullet');
     bullet.setVisible(true);
     bullet.rotation = rotation;
     bullet.setData('direction', direction);
@@ -162,12 +167,9 @@ export default class MainScene extends Phaser.Scene {
   }
 
   update() {
-    if (this.currentPlayer) {
-      // TO DO: Use gameStatus
-      if(this.currentPlayer && this.otherPlayers.length){ 
-        this.moveTank(); 
-      }
-
+    if (this.currentPlayer && this.otherPlayer) {
+      this.moveTank(); 
+      
       if (
         Phaser.Input.Keyboard.JustDown(this.spaceBar) ||
         Phaser.Input.Keyboard.JustDown(this.enterKey)
