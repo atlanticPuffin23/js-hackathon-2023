@@ -1,8 +1,10 @@
 import { DEFAULT_HEIGHT, DEFAULT_WIDTH } from '../game';
+import { socket } from './preloadScene';
 
 export default class MainScene extends Phaser.Scene {
   private speed = 5;
   private distanceToBorder = 25;
+  private gameStatus: Phaser.GameObjects.Text;
   private tank1: Phaser.GameObjects.Sprite;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -13,7 +15,13 @@ export default class MainScene extends Phaser.Scene {
     this.load.image('tank1', 'assets/gold_ukrainian_tank.svg');
   }
 
-  create() {
+  create() { 
+    this.gameStatus = this.add.text(10,10, '', {color: '#ff0000'})
+    
+    socket.on('gameState', (gameState) => {
+      this.gameStatus.setText(gameState.gameStatus);
+    });
+    
     this.tank1 = this.add.sprite(40, 80, 'tank1');
     this.distanceToBorder = this.tank1.width / 2;
     console.log(this.tank1);
@@ -21,7 +29,7 @@ export default class MainScene extends Phaser.Scene {
     // Enable keyboard input
     if (this.input.keyboard) {
       this.cursors = this.input.keyboard?.createCursorKeys();
-    }
+    }   
   }
 
   moveTank() {

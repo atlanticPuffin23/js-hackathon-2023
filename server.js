@@ -1,6 +1,13 @@
 const server = require('express')();
 const http = require('http').createServer(server);
-const io = require('socket.io')(http);
+const io = require('socket.io')(http, {  
+  cors: {
+  origin: ['http://localhost:8080','http://localhost:3000'],
+  methods: ['GET', 'POST'],
+},
+});
+
+const PORT = 3001;
 
 // type GameState = {
 //     gameStatus: 'waiting' | 'countdown' | 'in-progress' | 'ended',
@@ -37,6 +44,10 @@ const initialGameState = {
 let gameState = {
     ...initialGameState
 };  
+
+server.get('/', (req, res) => {
+  res.send('Server is running!');
+});
 
 io.on('connection', function (socket) {
   console.log('player [' + socket.id + '] connected')
@@ -78,7 +89,11 @@ io.on('connection', function (socket) {
 
     io.emit('playerDisconnected', socket.id)
   })
-
+  
+  // socket.on('newGame', function(){
+  //   io.emit('gameState', {...initialGameState});
+  // })
+  
   // socket.on('playerMovement', function (movementData) {
   //   players[socket.id].x = movementData.x
   //   players[socket.id].y = movementData.y
@@ -88,6 +103,6 @@ io.on('connection', function (socket) {
   // })
 });
 
-http.listen(3000, function () {
+http.listen(PORT, function () {
     console.log('Server started!');
 });

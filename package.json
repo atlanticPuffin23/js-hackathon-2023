@@ -4,11 +4,17 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "concurrently \"npm run build-server\" \"cd ./client && npm run start\"",
+    "build": "concurrently \"npm run build-server\" \"cd ./client && npm run build && npm run serve\"",
+    "build-server": "node ./server.js",
+    "start-client": "cd ./client && npm run start",
+    "build-client": "cd ./client && npm run build",
+    "serve": "cd ./client && npm run serve"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "concurrently": "^8.0.1",
     "express": "^4.18.2",
     "http": "^0.0.1-security",
     "socket.io": "^4.6.1"
