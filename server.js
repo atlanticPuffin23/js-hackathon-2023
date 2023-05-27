@@ -39,7 +39,7 @@ const initialGameState = {
 };
   
 let gameState = {
-    ...initialGameState
+    ...initialGameState, players: {...initialGameState.players}
 };  
 
 server.get('/', (req, res) => {
@@ -132,7 +132,7 @@ socket.on('startNewGame', ()=> {
   });
   
   socket.on('startOver', function () {
-    gameState = { ...initialGameState };
+    gameState = { ...initialGameState, players: {} };
   });
   
 });

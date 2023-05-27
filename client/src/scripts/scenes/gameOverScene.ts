@@ -16,9 +16,9 @@ export default class GameOverScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.text(100, 100, this.winnerId === socket.id ? 'You won!' : 'You lost :(', { color: "#ff0000"});
+    this.add.text(540, 500, this.winnerId === socket.id ? 'You won!' : 'You lost!', { color: "#ffffff", fontSize: 40});
     
-    this.startOverText = this.add.text(300, 300, 'Start Over', { color: "#ff0000"});
+    this.startOverText = this.add.text(460, 700, 'Start Over', { color: "#ff0000", fontSize: 60});
     this.startOverText.setInteractive();
     
     this.startOverText.on('pointerdown',  () => {
