@@ -14,7 +14,7 @@ export default class PreloadScene extends Phaser.Scene {
   create() {
     socket.connect();
     
-    this.add.text(100, 100, 'ATLANTIC PUFFIN BATTLE CITY', {fontFamily: 'VT323', color: '#ff0000' , fontSize: 72 });
+    this.add.text(100, 100, 'ATLANTIC PUFFIN BATTLE CITY', { color: '#ff0000' , fontSize: 72 });
     
     const guideline = this.add.text(400,500,'GUIDELINE', { fontSize: 40})
     guideline.setInteractive();
