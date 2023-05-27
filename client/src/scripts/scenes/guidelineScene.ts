@@ -5,7 +5,8 @@ export default class GuidelineScene extends Phaser.Scene {
   
     preload() {
       this.load.image('tank1', '../../assets/gold tank.svg')
-      this.load.image('heart', '../../assets/heart live.svg')
+      this.load.image('heart', '../../assets/heart_live.svg')
+      this.load.image('brick', '../../assets/texture  brick.svg')
       this.load.image('cement', '../../assets/texture cement.svg')
       this.load.image('grass', '../../assets/texture grass.svg')
       this.load.image('water', '../../assets/texture water.svg')

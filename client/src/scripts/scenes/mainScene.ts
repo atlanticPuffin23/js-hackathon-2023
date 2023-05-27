@@ -72,9 +72,15 @@ const waterPositions = [
   { x: 600, y: 1260 },
 ];
 
+const currentPlayerLivesPosition = {x: 40, y: 60}
+const otherPlayerLivesPosition = {x: 1200, y: 60}
+
 export default class MainScene extends Phaser.Scene {
   private speed = 5;
   private distanceToBorder = 25;
+  
+  private currentPlayerLives: Array<Phaser.Physics.Arcade.Sprite> = [];
+  private otherPlayerLives: Array<Phaser.Physics.Arcade.Sprite> = [];
 
   private currentPlayer: Phaser.Physics.Arcade.Sprite;
   private otherPlayer: Phaser.Physics.Arcade.Sprite;
@@ -117,6 +123,7 @@ export default class MainScene extends Phaser.Scene {
     this.load.image('cement', 'assets/texture cement.svg');
     this.load.image('grass', 'assets/texture grass.svg');
     this.load.image('water', 'assets/texture water.svg');
+    this.load.image('heart', 'assets/heart_live.svg');
   }
 
   create() {
@@ -228,7 +235,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   addPlayer(player) {
-    const { position } = player;
+    const { position, lives} = player;
 
     this.currentPlayer = this.physics.add.sprite(
       position.x,
@@ -237,14 +244,18 @@ export default class MainScene extends Phaser.Scene {
     );
     this.currentPlayer.rotation = position.rotation;
     this.currentPlayer.setData('direction', Direction.up);
-
+    this.currentPlayer.setData('lives', lives);
+    
     this.distanceToBorder = this.currentPlayer.width / 2;
 
     this.physics.add.collider(this.currentPlayer, this.cementGroup);
+    
+    this.drawLives( this.currentPlayer , this.currentPlayerLives, currentPlayerLivesPosition);
+    this.add.text(10, 5, 'Your lives:', {fontSize: 20})
   }
 
   addOtherPlayer(player) {
-    const { position } = player;
+    const { position, lives} = player;
     this.otherPlayer = this.physics.add.sprite(
       position.x + 40,
       position.y + 40,
@@ -253,6 +264,9 @@ export default class MainScene extends Phaser.Scene {
 
     this.otherPlayer.rotation = position.rotation;
     this.otherPlayer.setData('playerId', player.playerId);
+    this.otherPlayer.setData('lives', lives);
+    
+    this.drawLives(this.otherPlayer , this.otherPlayerLives, otherPlayerLivesPosition);
   }
 
   addBullet(bulletInfo: BulletInfo) {
@@ -278,6 +292,12 @@ export default class MainScene extends Phaser.Scene {
           deadPlayerId: this.otherPlayer.getData('playerId'),
         });
       });
+    }
+  }
+  
+  drawLives(player, playerLives, { x, y }) {
+    for (let i = 0; i < player.getData('lives'); i++) {
+     playerLives.push(this.add.sprite(x + i * 30, y, 'heart'));
     }
   }
 
