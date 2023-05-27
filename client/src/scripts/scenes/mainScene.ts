@@ -65,6 +65,8 @@ export default class MainScene extends Phaser.Scene {
   private normalRangeOfProjectile = 300;
   private normalShotDelay = 1000;
 
+  private hasAddedCollider = false;
+
   constructor() {
     super({ key: 'MainScene' });
   }
@@ -76,6 +78,8 @@ export default class MainScene extends Phaser.Scene {
   }
 
   create() { 
+    this.physics.world.setBounds(0, 0, DEFAULT_HEIGHT, DEFAULT_HEIGHT);
+
     socket.emit('startMewGame');
 
     this.cement = this.physics.add.sprite(300, 580, 'cement');
@@ -91,6 +95,7 @@ export default class MainScene extends Phaser.Scene {
           this.addPlayer(player);
         } else {
           this.addOtherPlayer(player);
+          console.log(this.currentPlayer, this.otherPlayer)
         }
       });
     });
@@ -171,7 +176,16 @@ export default class MainScene extends Phaser.Scene {
 
   update() {
     if (this.currentPlayer && this.otherPlayer) {
-      this.moveTank(); 
+
+      if (!this.hasAddedCollider) {
+        this.currentPlayer.setPushable(false);
+        this.otherPlayer.setPushable(false);
+        
+        this.physics.add.collider(this.currentPlayer, this.otherPlayer);
+        this.hasAddedCollider = true;
+      }
+
+      this.moveTank();
       
       if (
         Phaser.Input.Keyboard.JustDown(this.spaceBar) ||
@@ -204,33 +218,35 @@ export default class MainScene extends Phaser.Scene {
   }
 
   moveTank() {
+    this.currentPlayer.setVelocity(0);
+
     if (this.cursors.left.isDown) {
       this.currentPlayer.rotation = this.leftDirectionRotation;
       this.currentPlayer.setData('direction', Direction.left);
 
       if (this.currentPlayer.x - this.distanceToBorder > 0) {
-        this.currentPlayer.x -= this.speed;
+        this.currentPlayer.setVelocityX(-this.speed*50);
       }
     } else if (this.cursors.right.isDown) {
       this.currentPlayer.rotation = this.rightDirectionRotation;
       this.currentPlayer.setData('direction', Direction.right);
 
       if (this.currentPlayer.x + this.distanceToBorder < DEFAULT_WIDTH) {
-        this.currentPlayer.x += this.speed;
+        this.currentPlayer.setVelocityX(this.speed*50);
       }
     } else if (this.cursors.up.isDown) {
       this.currentPlayer.rotation = this.upDirectionRotation;
       this.currentPlayer.setData('direction', Direction.up);
 
       if (this.currentPlayer.y - this.distanceToBorder > 0) {
-        this.currentPlayer.y -= this.speed;
+        this.currentPlayer.setVelocityY(-this.speed*50);
       }
     } else if (this.cursors.down.isDown) {
       this.currentPlayer.rotation = this.downDirectionRotation;
       this.currentPlayer.setData('direction', Direction.down);
 
       if (this.currentPlayer.y + this.distanceToBorder < DEFAULT_HEIGHT) {
-        this.currentPlayer.y += this.speed;
+        this.currentPlayer.setVelocityY(this.speed*50);
       }
     }
 
