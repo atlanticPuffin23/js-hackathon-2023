@@ -94,6 +94,7 @@ export default class MainScene extends Phaser.Scene {
   private cementGroup: Phaser.Physics.Arcade.Group;
   private grassGroup: Phaser.Physics.Arcade.Group;
   private waterGroup: Phaser.Physics.Arcade.Group;
+  private puffin: Phaser.Physics.Arcade.Sprite;
 
   private leftDirectionRotation = Phaser.Math.DegToRad(-90);
   private rightDirectionRotation = Phaser.Math.DegToRad(90);
@@ -126,6 +127,7 @@ export default class MainScene extends Phaser.Scene {
     this.load.image('grass', 'assets/texture grass.svg');
     this.load.image('water', 'assets/texture water.svg');
     this.load.image('heart', 'assets/heart_live.svg');
+    this.load.image('puffin', 'assets/puffin.png');
 
     this.load.audio('main', 'assets/mainScene.mp3');
     this.load.audio('gameOver', 'assets/gameOver.mp3');
@@ -170,6 +172,9 @@ export default class MainScene extends Phaser.Scene {
       let water = this.physics.add.sprite(pos.x, pos.y, 'water');
       this.waterGroup.add(water);
     });
+
+    this.puffin = this.physics.add.sprite(520, 50, 'puffin');
+    this.puffin.scale = 0.15;
 
     this.bullets = this.physics.add.group({
       classType: Phaser.Physics.Arcade.Sprite,
