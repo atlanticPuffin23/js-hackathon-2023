@@ -73,7 +73,7 @@ export default class MainScene extends Phaser.Scene {
     socket.on('gameState', (gameState: GameState) => {
       const { players } = gameState;
       this.gameStatus.setText(gameState.gameStatus);
-      console.log('gameState', gameState);
+      console.log('gameState', gameState, gameState.players);
 
       Object.keys(players).forEach((playerId) => {
         const player = players[playerId];
@@ -84,6 +84,10 @@ export default class MainScene extends Phaser.Scene {
           this.addOtherPlayers(player);
         }
       });
+    });
+
+    socket.on("playerConnected", (player) => {
+      this.addOtherPlayers(player);
     });
 
     socket.on("playerMoved", (playerInfo) => {

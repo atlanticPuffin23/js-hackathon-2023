@@ -82,7 +82,8 @@ io.on('connection', function (socket) {
   }
 
   // TODO: split into separate events (gameStatus)
-  io.emit('gameState', gameState);
+  socket.emit('gameState', gameState);
+  socket.broadcast.emit('playerConnected', gameState.players[socket.id]);
  
   socket.on('disconnect', function () {
     delete gameState.players[socket.id];
