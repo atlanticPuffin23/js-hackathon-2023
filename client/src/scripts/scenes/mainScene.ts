@@ -53,6 +53,19 @@ let cementPositions = [
   { x: 1100, y: 900 },
 ];
 
+let grassPositions = [
+  { x: 350, y: 400 },
+  { x: 250, y: 500 },
+  { x: 750, y: 600 },
+  { x: 850, y: 700 },
+  { x: 550, y: 800 },
+  { x: 650, y: 200 },
+  { x: 450, y: 1000 },
+  { x: 1050, y: 1100 },
+  { x: 950, y: 1200 },
+  { x: 1150, y: 300 },
+];
+
 export default class MainScene extends Phaser.Scene {
   private speed = 5;
   private distanceToBorder = 25;
@@ -68,6 +81,7 @@ export default class MainScene extends Phaser.Scene {
   private enterKey: Phaser.Input.Keyboard.Key;
 
   private cementGroup: Phaser.Physics.Arcade.Group;
+  private grassGroup: Phaser.Physics.Arcade.Group;
 
   private leftDirectionRotation = Phaser.Math.DegToRad(-90);
   private rightDirectionRotation = Phaser.Math.DegToRad(90);
@@ -86,7 +100,8 @@ export default class MainScene extends Phaser.Scene {
   preload() {
     this.load.image('tank1', 'assets/gold_ukrainian_tank.svg');
     this.load.image('bullet', 'assets/bullet.svg');
-    this.load.image('cement', 'assets/texture cement.svg')
+    this.load.image('cement', 'assets/texture cement.svg');
+    this.load.image('grass', 'assets/texture grass.svg')
   }
 
   create() { 
@@ -100,9 +115,19 @@ export default class MainScene extends Phaser.Scene {
       quantity: 10,
     });
 
+    this.grassGroup = this.physics.add.group({
+      key: 'grass',
+      quantity: 10,
+    });
+
     cementPositions.forEach(pos => {
-      let brick = this.physics.add.sprite(pos.x, pos.y, 'cement');
-      this.cementGroup.add(brick);
+      let cement = this.physics.add.sprite(pos.x, pos.y, 'cement');
+      this.cementGroup.add(cement);
+    });
+
+    grassPositions.forEach(pos => {
+      let grass = this.physics.add.sprite(pos.x, pos.y, 'grass');
+      this.grassGroup.add(grass);
     });
 
     this.bullets = this.physics.add.group({
