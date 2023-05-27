@@ -31,6 +31,7 @@ type BulletInfo = {
   direction: Direction,
   rotation: number,
   visible: boolean,
+  isTankMoved: boolean,
 };
 
 type GameState = {
@@ -45,14 +46,16 @@ export default class MainScene extends Phaser.Scene {
   private distanceToBorder = 25;
   private gameStatus: Phaser.GameObjects.Text;
 
-  private currentPlayer: Phaser.GameObjects.Sprite;
-  private otherPlayers: Array<Phaser.GameObjects.Sprite> = [];
+  private currentPlayer: Phaser.Physics.Arcade.Sprite;
+  private otherPlayer: Phaser.Physics.Arcade.Sprite;
 
-  private bullets: Array<Phaser.GameObjects.Sprite> = [];
+  private bullets: Array<Phaser.Physics.Arcade.Sprite> = [];
 
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceBar: Phaser.Input.Keyboard.Key;
   private enterKey: Phaser.Input.Keyboard.Key;
+
+  private cement: Phaser.Physics.Arcade.Sprite;
 
   private leftDirectionRotation = Phaser.Math.DegToRad(-90);
   private rightDirectionRotation = Phaser.Math.DegToRad(90);
@@ -60,6 +63,9 @@ export default class MainScene extends Phaser.Scene {
   private downDirectionRotation = Phaser.Math.DegToRad(180);
 
   private normalRangeOfProjectile = 300;
+  private normalShotDelay = 1000;
+
+  private hasAddedCollider = false;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -68,10 +74,16 @@ export default class MainScene extends Phaser.Scene {
   preload() {
     this.load.image('tank1', 'assets/gold_ukrainian_tank.svg');
     this.load.image('bullet', 'assets/bullet.svg');
+    this.load.image('cement', 'assets/texture cement.svg')
   }
 
   create() { 
-    socket.emit('startMewGame');
+    this.physics.world.setBounds(0, 0, DEFAULT_HEIGHT, DEFAULT_HEIGHT);
+
+    socket.emit('startNewGame');
+
+    this.cement = this.physics.add.sprite(300, 580, 'cement');
+    this.cement.setImmovable(true);
     
     socket.on('currentPlayers', (players: Players) => {
       console.log('players', players);
@@ -82,34 +94,31 @@ export default class MainScene extends Phaser.Scene {
         if (playerId === socket.id) {
           this.addPlayer(player);
         } else {
-          this.addOtherPlayers(player);
+          this.addOtherPlayer(player);
+          console.log(this.currentPlayer, this.otherPlayer)
         }
       });
     });
 
     socket.on("playerConnected", (player) => {
       if (player) {
-        this.addOtherPlayers(player);
+        this.addOtherPlayer(player);
       }
     });
 
     socket.on("playerMoved", (playerInfo) => {
-      this.otherPlayers.forEach((otherPlayer) => {
-        if (playerInfo.playerId === otherPlayer.getData('playerId')) {
-          otherPlayer.setPosition(playerInfo.x, playerInfo.y);
-          otherPlayer.rotation = playerInfo.rotation;
-        }
-      });
+      if (playerInfo.playerId === this.otherPlayer?.getData('playerId')) {
+        this.otherPlayer.setPosition(playerInfo.x, playerInfo.y);
+        this.otherPlayer.rotation = playerInfo.rotation;
+      }
     });
 
     socket.on('bulletFired', (bulletInfo: BulletInfo) => this.addBullet(bulletInfo));
-    
+
     socket.on("playerDisconnected", (playerId) => {
-      this.otherPlayers.forEach((otherPlayer) => {
-        if (playerId === otherPlayer.getData('playerId')) {
-          otherPlayer.destroy();
-        }
-      });
+      if (playerId === this.otherPlayer?.getData('playerId')) {
+        this.otherPlayer.destroy();
+      }
     });
     
     socket.on('gameOver', (winnerId) => {
@@ -131,47 +140,57 @@ export default class MainScene extends Phaser.Scene {
   addPlayer(player) {
     const { position } = player;
 
-    this.currentPlayer = this.add.sprite(position.x, position.y, 'tank1');
+    this.currentPlayer = this.physics.add.sprite(position.x, position.y, 'tank1');
     this.currentPlayer.rotation = position.rotation;
     this.currentPlayer.setData('direction', Direction.up);
 
     this.distanceToBorder = this.currentPlayer.width / 2;
+    
+    this.physics.add.collider(this.currentPlayer, this.cement, () => {
+      console.log('collide current player + cement')
+    });
   }
 
-  addOtherPlayers(player) {
+  addOtherPlayer(player) {
     const { position } = player;
-    const otherPlayer = this.add.sprite(
+    this.otherPlayer = this.physics.add.sprite(
       position.x + 40,
       position.y + 40,
       "tank1"
     );
-    otherPlayer.rotation = position.rotation;
-    otherPlayer.setData('playerId', player.playerId);
 
-    this.otherPlayers.push(otherPlayer);
+    this.otherPlayer.rotation = position.rotation;
+    this.otherPlayer.setData('playerId', player.playerId);
   }
 
   addBullet(bulletInfo: BulletInfo) {
-    const { playerId, x, y, direction, rotation } = bulletInfo;
-
-    const bullet = this.add.sprite(x, y, 'bullet');
+    const { playerId, x, y, direction, rotation, isTankMoved } = bulletInfo;
+    
+    const bullet = this.physics.add.sprite(x, y, 'bullet');
     bullet.setVisible(true);
     bullet.rotation = rotation;
     bullet.setData('direction', direction);
     bullet.setData('start_x', x);
     bullet.setData('start_y', y);
     bullet.setData('playerId', playerId);
-
+    bullet.setData('isTankMoved', isTankMoved);
+    
     this.bullets.push(bullet);
   }
 
   update() {
-    if (this.currentPlayer) {
-      // TO DO: Use gameStatus
-      if(this.currentPlayer && this.otherPlayers.length){ 
-        this.moveTank(); 
+    if (this.currentPlayer && this.otherPlayer) {
+
+      if (!this.hasAddedCollider) {
+        this.currentPlayer.setPushable(false);
+        this.otherPlayer.setPushable(false);
+        
+        this.physics.add.collider(this.currentPlayer, this.otherPlayer);
+        this.hasAddedCollider = true;
       }
 
+      this.moveTank();
+      
       if (
         Phaser.Input.Keyboard.JustDown(this.spaceBar) ||
         Phaser.Input.Keyboard.JustDown(this.enterKey)
@@ -203,33 +222,35 @@ export default class MainScene extends Phaser.Scene {
   }
 
   moveTank() {
+    this.currentPlayer.setVelocity(0);
+
     if (this.cursors.left.isDown) {
       this.currentPlayer.rotation = this.leftDirectionRotation;
       this.currentPlayer.setData('direction', Direction.left);
 
       if (this.currentPlayer.x - this.distanceToBorder > 0) {
-        this.currentPlayer.x -= this.speed;
+        this.currentPlayer.setVelocityX(-this.speed*50);
       }
     } else if (this.cursors.right.isDown) {
       this.currentPlayer.rotation = this.rightDirectionRotation;
       this.currentPlayer.setData('direction', Direction.right);
 
       if (this.currentPlayer.x + this.distanceToBorder < DEFAULT_WIDTH) {
-        this.currentPlayer.x += this.speed;
+        this.currentPlayer.setVelocityX(this.speed*50);
       }
     } else if (this.cursors.up.isDown) {
       this.currentPlayer.rotation = this.upDirectionRotation;
       this.currentPlayer.setData('direction', Direction.up);
 
       if (this.currentPlayer.y - this.distanceToBorder > 0) {
-        this.currentPlayer.y -= this.speed;
+        this.currentPlayer.setVelocityY(-this.speed*50);
       }
     } else if (this.cursors.down.isDown) {
       this.currentPlayer.rotation = this.downDirectionRotation;
       this.currentPlayer.setData('direction', Direction.down);
 
       if (this.currentPlayer.y + this.distanceToBorder < DEFAULT_HEIGHT) {
-        this.currentPlayer.y += this.speed;
+        this.currentPlayer.setVelocityY(this.speed*50);
       }
     }
 
@@ -237,6 +258,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   shootBullet() {
+    this.delayNextShot();
     const bulletDirection: Direction = this.currentPlayer.getData('direction');
 
     const bulletInfo = {
@@ -246,59 +268,74 @@ export default class MainScene extends Phaser.Scene {
       direction: bulletDirection,
       rotation: this.getRotationValue(bulletDirection),
       visible: true,
+      isTankMoved: this.cursors.left.isDown || this.cursors.right.isDown  || this.cursors.up.isDown || this.cursors.down.isDown,
     };
-
+    
     socket.emit('bulletShoot', bulletInfo);
+  }
+
+  delayNextShot() {
+    this.enterKey.enabled = false;
+    this.spaceBar.enabled = false;
+
+    setTimeout(() => {
+      this.enterKey.enabled = true;
+      this.spaceBar.enabled = true;
+    }, this.normalShotDelay);
   }
 
   moveBullet(bullet: Phaser.GameObjects.Sprite) {
     if (bullet.visible) {
+      const isTankMoved = bullet.getData('isTankMoved') || this.cursors.left.isDown || this.cursors.right.isDown  || this.cursors.up.isDown || this.cursors.down.isDown;
+      const bulletMoveSpeed = isTankMoved ? 2 * this.speed : this.speed;
+      const bulletNormalRangeOfProjectile = isTankMoved ? 2 * this.normalRangeOfProjectile : this.normalRangeOfProjectile
+      
       switch (bullet.getData('direction')) {
         case Direction.up: {
           if (
             bullet.getData('start_y') - bullet.y ===
-            this.normalRangeOfProjectile
+            bulletNormalRangeOfProjectile
           ) {
             bullet.setPosition(0, 0);
             bullet.setVisible(false);
             return;
           }
-          bullet.y -= this.speed;
+          bullet.y -= bulletMoveSpeed;
           break;
         }
         case Direction.down: {
           if (
             bullet.y - bullet.getData('start_y') ===
-            this.normalRangeOfProjectile
+            bulletNormalRangeOfProjectile
           ) {
             bullet.setPosition(0, 0);
             bullet.setVisible(false);
             return;
           }
-          bullet.y += this.speed;
+          bullet.y += bulletMoveSpeed;
           break;
         }
         case Direction.left: {
           if (
             bullet.getData('start_x') - bullet.x ===
-            this.normalRangeOfProjectile
+            bulletNormalRangeOfProjectile
           ) {
             bullet.setPosition(0, 0);
             bullet.setVisible(false);
           }
-          bullet.x -= this.speed;
+          bullet.x -= bulletMoveSpeed;
           break;
         }
         case Direction.right: {
           if (
             bullet.x - bullet.getData('start_x') ===
-            this.normalRangeOfProjectile
+            bulletNormalRangeOfProjectile
           ) {
             bullet.setPosition(0, 0);
             bullet.setVisible(false);
             return;
           }
-          bullet.x += this.speed;
+          bullet.x += bulletMoveSpeed;
           break;
         }
       }

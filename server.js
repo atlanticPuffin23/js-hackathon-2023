@@ -49,7 +49,7 @@ server.get('/', (req, res) => {
 io.on('connection', function (socket) {
   console.log('player [' + socket.id + '] connected')
   
-socket.on('startMewGame', ()=> {
+socket.on('startNewGame', ()=> {
  
   if (Object.keys(gameState.players).length < 2) {
     gameState.players[socket.id] = {

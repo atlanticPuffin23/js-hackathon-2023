@@ -17,6 +17,13 @@ const config = {
     width: DEFAULT_WIDTH,
     height: DEFAULT_HEIGHT
   },
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 0 },
+      debug: true
+    },
+  },
   scene: [PreloadScene, MainScene, GuidelineScene, GameOverScene],
 }
 
