@@ -32,7 +32,7 @@ export default class GuidelineScene extends Phaser.Scene {
       this.add.sprite(300, 580, 'cement');
       this.add.text(400, 580, 'cement - impenetrable obstacle, it is impossible to  destroy and shoot through it.')
       this.add.sprite(300, 680, 'grass');
-      this.add.text(400, 680, 'brick - penetrable obstacle, it is possible to shoot and go through it.')
+      this.add.text(400, 680, 'grass - penetrable obstacle, it is possible to shoot and go through it.')
       this.add.sprite(300, 780, 'water');
       this.add.text(400, 780, 'water - dangerous obstacle, once tank in the water, one life is taken away.')
     }
