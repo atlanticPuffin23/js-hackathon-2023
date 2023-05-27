@@ -71,6 +71,8 @@ export default class MainScene extends Phaser.Scene {
   }
 
   create() { 
+    socket.emit('startMewGame');
+    
     socket.on('currentPlayers', (players: Players) => {
       console.log('players', players);
 
@@ -161,7 +163,10 @@ export default class MainScene extends Phaser.Scene {
 
   update() {
     if (this.currentPlayer) {
-      this.moveTank();
+      // TO DO: Use gameStatus
+      if(this.currentPlayer && this.otherPlayers.length){ 
+        this.moveTank(); 
+      }
 
       if (
         Phaser.Input.Keyboard.JustDown(this.spaceBar) ||
