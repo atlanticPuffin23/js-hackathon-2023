@@ -48,7 +48,9 @@ server.get('/', (req, res) => {
 
 io.on('connection', function (socket) {
   console.log('player [' + socket.id + '] connected')
-
+  
+socket.on('startMewGame', ()=> {
+ 
   if (Object.keys(gameState.players).length < 2) {
     gameState.players[socket.id] = {
       playerId: socket.id,
@@ -62,21 +64,13 @@ io.on('connection', function (socket) {
       status: 'active'
     };
     
-    // if (Object.keys(gameState.players).length === 2) {
-    //   gameState.gameStatus = 'countdown';
-    
-    //   setTimeout(() => {
-    //     gameState.gameStatus = 'in-progress';
-    //   }, 3000);
-    // }
   } else {
     gameState.gameStatus = 'in-progress';
   }
 
-  // TODO: split into separate events (gameStatus)
-
   socket.emit('currentPlayers', gameState.players);
   socket.broadcast.emit('playerConnected', gameState.players[socket.id]);
+})
  
   socket.on('disconnect', function () {
     delete gameState.players[socket.id];
@@ -109,7 +103,7 @@ io.on('connection', function (socket) {
     socket.emit('gameOver',  gameState.winnerId)
   });
   
-  socket.on('startNewGame', function () {
+  socket.on('startOver', function () {
     gameState = { ...initialGameState };
   });
   
