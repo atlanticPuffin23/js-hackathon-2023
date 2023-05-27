@@ -31,6 +31,7 @@ type BulletInfo = {
   direction: Direction,
   rotation: number,
   visible: boolean,
+  isTankMoved: boolean,
 };
 
 type GameState = {
@@ -62,6 +63,7 @@ export default class MainScene extends Phaser.Scene {
   private downDirectionRotation = Phaser.Math.DegToRad(180);
 
   private normalRangeOfProjectile = 300;
+  private normalShotDelay = 1000;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -153,8 +155,8 @@ export default class MainScene extends Phaser.Scene {
   }
 
   addBullet(bulletInfo: BulletInfo) {
-    const { playerId, x, y, direction, rotation } = bulletInfo;
-
+    const { playerId, x, y, direction, rotation, isTankMoved } = bulletInfo;
+    
     const bullet = this.physics.add.sprite(x, y, 'bullet');
     bullet.setVisible(true);
     bullet.rotation = rotation;
@@ -162,7 +164,8 @@ export default class MainScene extends Phaser.Scene {
     bullet.setData('start_x', x);
     bullet.setData('start_y', y);
     bullet.setData('playerId', playerId);
-
+    bullet.setData('isTankMoved', isTankMoved);
+    
     this.bullets.push(bullet);
   }
 
@@ -235,6 +238,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   shootBullet() {
+    this.delayNextShot();
     const bulletDirection: Direction = this.currentPlayer.getData('direction');
 
     const bulletInfo = {
@@ -244,59 +248,74 @@ export default class MainScene extends Phaser.Scene {
       direction: bulletDirection,
       rotation: this.getRotationValue(bulletDirection),
       visible: true,
+      isTankMoved: this.cursors.left.isDown || this.cursors.right.isDown  || this.cursors.up.isDown || this.cursors.down.isDown,
     };
-
+    
     socket.emit('bulletShoot', bulletInfo);
+  }
+
+  delayNextShot() {
+    this.enterKey.enabled = false;
+    this.spaceBar.enabled = false;
+
+    setTimeout(() => {
+      this.enterKey.enabled = true;
+      this.spaceBar.enabled = true;
+    }, this.normalShotDelay);
   }
 
   moveBullet(bullet: Phaser.GameObjects.Sprite) {
     if (bullet.visible) {
+      const isTankMoved = bullet.getData('isTankMoved') || this.cursors.left.isDown || this.cursors.right.isDown  || this.cursors.up.isDown || this.cursors.down.isDown;
+      const bulletMoveSpeed = isTankMoved ? 2 * this.speed : this.speed;
+      const bulletNormalRangeOfProjectile = isTankMoved ? 2 * this.normalRangeOfProjectile : this.normalRangeOfProjectile
+      
       switch (bullet.getData('direction')) {
         case Direction.up: {
           if (
             bullet.getData('start_y') - bullet.y ===
-            this.normalRangeOfProjectile
+            bulletNormalRangeOfProjectile
           ) {
             bullet.setPosition(0, 0);
             bullet.setVisible(false);
             return;
           }
-          bullet.y -= this.speed;
+          bullet.y -= bulletMoveSpeed;
           break;
         }
         case Direction.down: {
           if (
             bullet.y - bullet.getData('start_y') ===
-            this.normalRangeOfProjectile
+            bulletNormalRangeOfProjectile
           ) {
             bullet.setPosition(0, 0);
             bullet.setVisible(false);
             return;
           }
-          bullet.y += this.speed;
+          bullet.y += bulletMoveSpeed;
           break;
         }
         case Direction.left: {
           if (
             bullet.getData('start_x') - bullet.x ===
-            this.normalRangeOfProjectile
+            bulletNormalRangeOfProjectile
           ) {
             bullet.setPosition(0, 0);
             bullet.setVisible(false);
           }
-          bullet.x -= this.speed;
+          bullet.x -= bulletMoveSpeed;
           break;
         }
         case Direction.right: {
           if (
             bullet.x - bullet.getData('start_x') ===
-            this.normalRangeOfProjectile
+            bulletNormalRangeOfProjectile
           ) {
             bullet.setPosition(0, 0);
             bullet.setVisible(false);
             return;
           }
-          bullet.x += this.speed;
+          bullet.x += bulletMoveSpeed;
           break;
         }
       }
