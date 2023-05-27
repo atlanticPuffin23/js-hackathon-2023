@@ -41,7 +41,7 @@ type GameState = {
     winnerId: string | null,
 };
 
-let cementPositions = [
+const cementPositions = [
   { x: 200, y: 700 },
   { x: 800, y: 300 },
   { x: 500, y: 500 },
@@ -53,7 +53,7 @@ let cementPositions = [
   { x: 1100, y: 900 },
 ];
 
-let grassPositions = [
+const grassPositions = [
   { x: 350, y: 400 },
   { x: 250, y: 500 },
   { x: 750, y: 600 },
@@ -64,6 +64,17 @@ let grassPositions = [
   { x: 1050, y: 1100 },
   { x: 950, y: 1200 },
   { x: 1150, y: 300 },
+];
+
+const waterPositions = [
+  { x: 520, y: 40 },
+  { x: 460, y: 40 },
+  { x: 380, y: 40 },
+  { x: 300, y: 40 },
+  { x: 820, y: 1260 },
+  { x: 760, y: 1260 },
+  { x: 680, y: 1260 },
+  { x: 600, y: 1260 },
 ];
 
 export default class MainScene extends Phaser.Scene {
@@ -82,6 +93,7 @@ export default class MainScene extends Phaser.Scene {
 
   private cementGroup: Phaser.Physics.Arcade.Group;
   private grassGroup: Phaser.Physics.Arcade.Group;
+  private waterGroup: Phaser.Physics.Arcade.Group;
 
   private leftDirectionRotation = Phaser.Math.DegToRad(-90);
   private rightDirectionRotation = Phaser.Math.DegToRad(90);
@@ -101,7 +113,8 @@ export default class MainScene extends Phaser.Scene {
     this.load.image('tank1', 'assets/gold_ukrainian_tank.svg');
     this.load.image('bullet', 'assets/bullet.svg');
     this.load.image('cement', 'assets/texture cement.svg');
-    this.load.image('grass', 'assets/texture grass.svg')
+    this.load.image('grass', 'assets/texture grass.svg');
+    this.load.image('water', 'assets/texture water.svg')
   }
 
   create() { 
@@ -120,6 +133,11 @@ export default class MainScene extends Phaser.Scene {
       quantity: 10,
     });
 
+    this.waterGroup = this.physics.add.group({
+      key: 'water',
+      quantity: 10,
+    });
+
     cementPositions.forEach(pos => {
       let cement = this.physics.add.sprite(pos.x, pos.y, 'cement');
       this.cementGroup.add(cement);
@@ -128,6 +146,11 @@ export default class MainScene extends Phaser.Scene {
     grassPositions.forEach(pos => {
       let grass = this.physics.add.sprite(pos.x, pos.y, 'grass');
       this.grassGroup.add(grass);
+    });
+
+    waterPositions.forEach(pos => {
+      let water = this.physics.add.sprite(pos.x, pos.y, 'water');
+      this.waterGroup.add(water);
     });
 
     this.bullets = this.physics.add.group({
@@ -195,9 +218,7 @@ export default class MainScene extends Phaser.Scene {
 
     this.distanceToBorder = this.currentPlayer.width / 2;
     
-    this.physics.add.collider(this.currentPlayer, this.cementGroup, () => {
-      console.log('collide current player + cement')
-    });
+    this.physics.add.collider(this.currentPlayer, this.cementGroup);
   }
 
   addOtherPlayer(player) {
@@ -239,6 +260,10 @@ export default class MainScene extends Phaser.Scene {
         this.otherPlayer.setPushable(false);
 
         this.physics.add.collider(this.currentPlayer, this.otherPlayer);
+        // TODO: double check this logic
+        this.physics.add.collider(this.currentPlayer, this.waterGroup, () => {
+          socket.emit('playerDied', {playerId: socket.id, deadPlayerId: this.otherPlayer.getData('playerId')})
+        });
 
         this.hasAddedCollider = true;
       }

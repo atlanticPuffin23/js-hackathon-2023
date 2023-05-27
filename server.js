@@ -50,23 +50,51 @@ io.on('connection', function (socket) {
   console.log('player [' + socket.id + '] connected')
   
 socket.on('startNewGame', ()=> {
- 
-  if (Object.keys(gameState.players).length < 2) {
-    gameState.players[socket.id] = {
-      playerId: socket.id,
-      position: {
-        x: 40,
-        y: 80,
-        rotation: 0,
-      },
-      lives: 3,
-      direction: 'up',
-      status: 'active'
-    };
-    
-  } else {
-    gameState.gameStatus = 'in-progress';
+  switch (Object.keys(gameState.players).length) {
+    case 0:
+      gameState.players[socket.id] = {
+        playerId: socket.id,
+        position: {
+          x: 100,
+          y: 100,
+          rotation: 0,
+        },
+        lives: 3,
+        direction: 'up',
+        status: 'active'
+      };
+      break;
+    case 1:
+      gameState.players[socket.id] = {
+        playerId: socket.id,
+        position: {
+          x: 1200,
+          y: 1200,
+          rotation: 0,
+        },
+        lives: 3,
+        direction: 'down',
+        status: 'active'
+      };
+      break;
+    default:
+      gameState.gameStatus = 'in-progress';
   }
+  // if (Object.keys(gameState.players).length < 2) {
+  //   gameState.players[socket.id] = {
+  //     playerId: socket.id,
+  //     position: {
+  //       x: 100,
+  //       y: 100,
+  //       rotation: 0,
+  //     },
+  //     lives: 3,
+  //     direction: 'up',
+  //     status: 'active'
+  //   };
+  // } else {
+  //   gameState.gameStatus = 'in-progress';
+  // }
 
   socket.emit('currentPlayers', gameState.players);
   socket.broadcast.emit('playerConnected', gameState.players[socket.id]);
