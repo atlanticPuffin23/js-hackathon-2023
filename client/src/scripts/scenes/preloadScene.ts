@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import './../font.css'
 
 const SERVER_URL = "http://localhost:3001";
 export const socket = io(SERVER_URL);
@@ -8,13 +9,27 @@ export default class PreloadScene extends Phaser.Scene {
     super({ key: 'PreloadScene' })
   }
 
-  preload() {
-  }
+  preload() { }
 
   create() {
     socket.connect();
+    //@ts-ignore
+    this.add.text(400, 100, 'HACKATHON', {fontFamily: 'VT323', fontWeight: 400, fontSize: 60 });
+    //@ts-ignore
+    const guideline = this.add.text(400,500,'GUIDELINE', {fontWeight: 400, fontSize: 40})
+    guideline.setInteractive();
+    guideline.on('pointerdown',() => {      
+      this.scene.start('GuidelineScene');
+    })
+    //@ts-ignore
+    const play = this.add.text(400,700,'PLAY', {fontWeight: 400, fontSize: 40})
+    play.setInteractive();
+    play.on('pointerdown',() => {
+      this.scene.start('MainScene');
+    })
+
+
     
-    this.scene.start('MainScene');
     
     // socket.on('gameState', (gameState) => {
     //   console.log('on game state', gameState)
