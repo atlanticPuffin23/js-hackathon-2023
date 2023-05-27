@@ -41,6 +41,18 @@ type GameState = {
     winnerId: string | null,
 };
 
+let cementPositions = [
+  { x: 200, y: 700 },
+  { x: 800, y: 300 },
+  { x: 500, y: 500 },
+  { x: 1200, y: 400 },
+  { x: 250, y: 1200 },
+  { x: 950, y: 1150 },
+  { x: 400, y: 800 },
+  { x: 700, y: 100 },
+  { x: 1100, y: 900 },
+];
+
 export default class MainScene extends Phaser.Scene {
   private speed = 5;
   private distanceToBorder = 25;
@@ -55,7 +67,7 @@ export default class MainScene extends Phaser.Scene {
   private spaceBar: Phaser.Input.Keyboard.Key;
   private enterKey: Phaser.Input.Keyboard.Key;
 
-  private cement: Phaser.Physics.Arcade.Sprite;
+  private cementGroup: Phaser.Physics.Arcade.Group;
 
   private leftDirectionRotation = Phaser.Math.DegToRad(-90);
   private rightDirectionRotation = Phaser.Math.DegToRad(90);
@@ -82,8 +94,16 @@ export default class MainScene extends Phaser.Scene {
 
     socket.emit('startNewGame');
 
-    this.cement = this.physics.add.sprite(300, 580, 'cement');
-    this.cement.setImmovable(true);
+    this.cementGroup = this.physics.add.group({
+      key: 'cement',
+      immovable: true,
+      quantity: 10,
+    });
+
+    cementPositions.forEach(pos => {
+      let brick = this.physics.add.sprite(pos.x, pos.y, 'cement');
+      this.cementGroup.add(brick);
+    });
 
     this.bullets = this.physics.add.group({
       classType: Phaser.Physics.Arcade.Sprite
@@ -150,7 +170,7 @@ export default class MainScene extends Phaser.Scene {
 
     this.distanceToBorder = this.currentPlayer.width / 2;
     
-    this.physics.add.collider(this.currentPlayer, this.cement, () => {
+    this.physics.add.collider(this.currentPlayer, this.cementGroup, () => {
       console.log('collide current player + cement')
     });
   }
@@ -181,7 +201,6 @@ export default class MainScene extends Phaser.Scene {
 
     if (bullet.getData('playerId') === socket.id) {
       this.physics.add.overlap(bullet, this.otherPlayer, () => {
-        console.log('overlap bullet + other player')
         socket.emit('playerDied', {playerId: socket.id, deadPlayerId: this.otherPlayer.getData('playerId')})
       });
     }
