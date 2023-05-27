@@ -60,6 +60,7 @@ export default class MainScene extends Phaser.Scene {
   private downDirectionRotation = Phaser.Math.DegToRad(180);
 
   private normalRangeOfProjectile = 300;
+  private normalShotDelay = 1000;
 
   constructor() {
     super({ key: 'MainScene' });
@@ -233,6 +234,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   shootBullet() {
+    this.delayNextShot();
     const bulletDirection: Direction = this.currentPlayer.getData('direction');
 
     const bulletInfo = {
@@ -245,6 +247,16 @@ export default class MainScene extends Phaser.Scene {
     };
 
     socket.emit('bulletShoot', bulletInfo);
+  }
+
+  delayNextShot() {
+    this.enterKey.enabled = false;
+    this.spaceBar.enabled = false;
+
+    setTimeout(() => {
+      this.enterKey.enabled = true;
+      this.spaceBar.enabled = true;
+    }, this.normalShotDelay);
   }
 
   moveBullet(bullet: Phaser.GameObjects.Sprite) {
