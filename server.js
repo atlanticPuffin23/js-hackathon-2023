@@ -9,30 +9,34 @@ const io = require('socket.io')(http, {
 
 const PORT = 3001;
 
-// type GameState = {
-//     gameStatus: 'waiting' | 'countdown' | 'in-progress' | 'ended',
-//     players: {
-//       [playerId: string]: {
-//         position: {
-//           x: number,
-//           y: number,
-//         },
-//         lives: number,
-//         direction: 'up' | 'down' | 'left' | 'right',
-//         status: 'active' | 'hit' | 'dead',
-//         activeShots: Array<{
-//           playerId: string,
-//           position: {
-//             x: number,
-//             y: number,
-//           },
-//           direction: 'up' | 'down' | 'left' | 'right',
-//         }>,
-//       },
-//     },
-//     obstacles: Array<{x: number, y: number}>,
-//     winnerId: string | null,
-// };
+/*
+type GameState = {
+    gameStatus: 'waiting' | 'countdown' | 'in-progress' | 'ended',
+    players: {
+      [playerId: string]: {
+        playerId: string,
+        position: {
+          x: number,
+          y: number,
+          rotation: number,
+        },
+        lives: number,
+        direction: 'up' | 'down' | 'left' | 'right',
+        status: 'active' | 'hit' | 'dead',
+        activeShots: Array<{
+          playerId: string,
+          position: {
+            x: number,
+            y: number,
+          },
+          direction: 'up' | 'down' | 'left' | 'right',
+        }>,
+      },
+    },
+    obstacles: Array<{x: number, y: number}>,
+    winnerId: string | null,
+};
+*/
 
 const initialGameState = {
     gameStatus: 'waiting',
@@ -52,11 +56,13 @@ server.get('/', (req, res) => {
 io.on('connection', function (socket) {
   console.log('player [' + socket.id + '] connected')
 
-  if (gameState.gameStatus === 'waiting') {
+  if (Object.keys(gameState.players).length < 2) {
     gameState.players[socket.id] = {
+      playerId: socket.id,
       position: {
-        x: 0,
-        y: 0,
+        x: 40,
+        y: 80,
+        rotation: 0,
       },
       lives: 3,
       direction: 'up',
@@ -64,43 +70,38 @@ io.on('connection', function (socket) {
       activeShots: [],
     };
 
-    if (Object.keys(gameState.players).length === 2) {
-      gameState.gameStatus = 'countdown';
+    // if (Object.keys(gameState.players).length === 2) {
+    //   gameState.gameStatus = 'countdown';
 
-      setTimeout(() => {
-        gameState.gameStatus = 'in-progress';
-      }, 3000);
-    }
+    //   setTimeout(() => {
+    //     gameState.gameStatus = 'in-progress';
+    //   }, 3000);
+    // }
+  } else {
+    gameState.gameStatus = 'in-progress';
   }
 
   // TODO: split into separate events (gameStatus)
-  socket.emit('gameState', gameState);
-
-  // socket.broadcast.emit('newPlayer', players[socket.id]) // ?
+  io.emit('gameState', gameState);
  
   socket.on('disconnect', function () {
-    console.log('player [' + socket.id + '] disconnected')
     delete gameState.players[socket.id];
-
-    if (Object.keys(gameState.players).length === 1) {
-      gameState.gameStatus = 'ended';
-      gameState.winnerId = Object.keys(gameState.players)[0];
-    };
+    console.log('player [' + socket.id + '] disconnected');
+    // if (Object.keys(gameState.players).length === 1) {
+    //   gameState.gameStatus = 'ended';
+    //   gameState.winnerId = Object.keys(gameState.players)[0];
+    // };
 
     io.emit('playerDisconnected', socket.id)
   })
   
-  // socket.on('newGame', function(){
-  //   io.emit('gameState', {...initialGameState});
-  // })
-  
-  // socket.on('playerMovement', function (movementData) {
-  //   players[socket.id].x = movementData.x
-  //   players[socket.id].y = movementData.y
-  //   players[socket.id].rotation = movementData.rotation
+  socket.on('playerMovement', function (movementData) {
+    gameState.players[socket.id].x = movementData.x
+    gameState.players[socket.id].y = movementData.y
+    gameState.players[socket.id].rotation = movementData.rotation
 
-  //   socket.broadcast.emit('playerMoved', players[socket.id])
-  // })
+    socket.broadcast.emit('playerMoved', gameState.players[socket.id])
+  })
 });
 
 http.listen(PORT, function () {

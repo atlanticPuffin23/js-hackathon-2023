@@ -22,8 +22,10 @@
   },
   "homepage": "https://github.com/atlanticPuffin23/js-hackathon-2023#readme",
   "dependencies": {
+    "css-loader": "^6.7.4",
     "phaser": "^3.55.2",
-    "socket.io-client": "^4.6.1"
+    "socket.io-client": "^4.6.1",
+    "style-loader": "^3.3.3"
   },
   "devDependencies": {
     "@yandeu/prettier-config": "^0.0.3",
