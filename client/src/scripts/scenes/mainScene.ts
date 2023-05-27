@@ -105,6 +105,8 @@ export default class MainScene extends Phaser.Scene {
   private countdownDuration: number = 4000;
   private countdownRemainingTime: number = this.countdownDuration;
 
+  private mainSound: Phaser.Sound.BaseSound;
+
   private disabled = true;
 
   constructor() {
@@ -117,9 +119,15 @@ export default class MainScene extends Phaser.Scene {
     this.load.image('cement', 'assets/texture cement.svg');
     this.load.image('grass', 'assets/texture grass.svg');
     this.load.image('water', 'assets/texture water.svg');
+
+    this.load.audio('main', 'assets/mainScene.mp3');
+    this.load.audio('gameOver', 'assets/gameOver.mp3');
   }
 
   create() {
+    this.mainSound = this.sound.add("main", { loop: true });
+    this.mainSound.play({ volume: 0.1 });
+
     this.physics.world.setBounds(0, 0, DEFAULT_HEIGHT, DEFAULT_HEIGHT);
 
     socket.emit('startNewGame');
@@ -210,6 +218,9 @@ export default class MainScene extends Phaser.Scene {
     });
 
     socket.on('gameOver', ({ winner, loser }) => {
+      this.mainSound.stop();
+      this.sound.add("gameOver", { loop: false }).play({ volume: 0.1 });
+
       this.scene.start('GameOverScene', { winner, loser });
     });
 
