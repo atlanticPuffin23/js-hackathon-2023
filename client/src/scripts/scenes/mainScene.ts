@@ -145,6 +145,12 @@ const waterPositions = [
   { x: 1000, y: 300 },
 
   { x: 600, y: 1260 },
+
+  {x: 140, y: 1080},
+  {x: 220, y: 1080},
+  {x: 300, y: 1080},
+  {x: 380, y: 1080},
+  {x: 460, y: 1080},
 ];
 
 export default class MainScene extends Phaser.Scene {
