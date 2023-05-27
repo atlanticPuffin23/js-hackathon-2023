@@ -100,7 +100,7 @@ export default class MainScene extends Phaser.Scene {
   private upDirectionRotation = 0;
   private downDirectionRotation = Phaser.Math.DegToRad(180);
 
-  private normalRangeOfProjectile = 300;
+  private normalRangeOfProjectile = 650;
   private normalShotDelay = 1000;
 
   private hasAddedCollider = false;
@@ -186,6 +186,10 @@ export default class MainScene extends Phaser.Scene {
     });
 
     socket.on('bulletFired', (bulletInfo: BulletInfo) => this.addBullet(bulletInfo));
+
+    this.physics.add.collider(this.bullets, this.cementGroup, (bullet) => {
+      bullet.destroy();
+    });
 
     socket.on("playerDisconnected", (playerId) => {
       if (playerId === this.otherPlayer?.getData('playerId')) {
