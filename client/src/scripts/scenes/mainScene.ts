@@ -212,6 +212,8 @@ export default class MainScene extends Phaser.Scene {
 
     socket.on('playerDisconnected', (playerId) => {
       if (playerId === this.otherPlayer?.getData('playerId')) {
+        this.addOverlay('Please wait until another user joins...');
+        this.disabled = true;
         this.otherPlayer.destroy();
       }
     });
