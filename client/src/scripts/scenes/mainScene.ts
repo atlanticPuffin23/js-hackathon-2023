@@ -12,7 +12,7 @@ export default class MainScene extends Phaser.Scene {
   private speed = 5;
   private distanceToBorder = 25;
   private gameStatus: Phaser.GameObjects.Text;
-  private tank1: Phaser.GameObjects.Sprite;
+  private currentPlayer: Phaser.GameObjects.Sprite;
   private bullet: Phaser.GameObjects.Sprite;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private spaceBar: Phaser.Input.Keyboard.Key;
@@ -40,13 +40,13 @@ export default class MainScene extends Phaser.Scene {
       this.gameStatus.setText(gameState.gameStatus);
     });
 
-    this.tank1 = this.add.sprite(40, 80, 'tank1');
-    this.tank1.setData('direction', Direction.up);
+    this.currentPlayer = this.add.sprite(40, 80, 'tank1');
+    this.currentPlayer.setData('direction', Direction.up);
     // Create the bullet sprite
     this.bullet = this.add.sprite(0, 0, 'bullet');
     this.bullet.setVisible(false); // Hide the bullet initially
 
-    this.distanceToBorder = this.tank1.width / 2;
+    this.distanceToBorder = this.currentPlayer.width / 2;
 
     // Enable keyboard input
     if (this.input.keyboard) {
@@ -90,50 +90,50 @@ export default class MainScene extends Phaser.Scene {
 
   moveTank() {
     if (this.cursors.left.isDown) {
-      this.tank1.rotation = this.leftDirectionRotation;
-      this.tank1.setData('direction', Direction.left);
+      this.currentPlayer.rotation = this.leftDirectionRotation;
+      this.currentPlayer.setData('direction', Direction.left);
 
-      if (this.tank1.x - this.distanceToBorder > 0) {
-        this.tank1.x -= this.speed;
+      if (this.currentPlayer.x - this.distanceToBorder > 0) {
+        this.currentPlayer.x -= this.speed;
       }
     }
 
     if (this.cursors.right.isDown) {
-      this.tank1.rotation = this.rightDirectionRotation;
-      this.tank1.setData('direction', Direction.right);
+      this.currentPlayer.rotation = this.rightDirectionRotation;
+      this.currentPlayer.setData('direction', Direction.right);
 
-      if (this.tank1.x + this.distanceToBorder < DEFAULT_WIDTH) {
-        this.tank1.x += this.speed;
+      if (this.currentPlayer.x + this.distanceToBorder < DEFAULT_WIDTH) {
+        this.currentPlayer.x += this.speed;
       }
     }
 
     if (this.cursors.up.isDown) {
-      this.tank1.rotation = this.upDirectionRotation;
-      this.tank1.setData('direction', Direction.up);
+      this.currentPlayer.rotation = this.upDirectionRotation;
+      this.currentPlayer.setData('direction', Direction.up);
 
-      if (this.tank1.y - this.distanceToBorder > 0) {
-        this.tank1.y -= this.speed;
+      if (this.currentPlayer.y - this.distanceToBorder > 0) {
+        this.currentPlayer.y -= this.speed;
       }
     }
     if (this.cursors.down.isDown) {
-      this.tank1.rotation = this.downDirectionRotation;
-      this.tank1.setData('direction', Direction.down);
+      this.currentPlayer.rotation = this.downDirectionRotation;
+      this.currentPlayer.setData('direction', Direction.down);
 
-      if (this.tank1.y + this.distanceToBorder < DEFAULT_HEIGHT) {
-        this.tank1.y += this.speed;
+      if (this.currentPlayer.y + this.distanceToBorder < DEFAULT_HEIGHT) {
+        this.currentPlayer.y += this.speed;
       }
     }
   }
 
   shootBullet() {
     if (!this.bullet.visible) {
-      this.bullet.setPosition(this.tank1.x, this.tank1.y);
+      this.bullet.setPosition(this.currentPlayer.x, this.currentPlayer.y);
       this.bullet.setVisible(true);
-      const direction: Direction = this.tank1.getData('direction');
+      const direction: Direction = this.currentPlayer.getData('direction');
       this.bullet.rotation = this.getRotationValue(direction);
       this.bullet.setData('direction', direction);
-      this.bullet.setData('start_x', this.tank1.x);
-      this.bullet.setData('start_y', this.tank1.y);
+      this.bullet.setData('start_x', this.currentPlayer.x);
+      this.bullet.setData('start_y', this.currentPlayer.y);
     }
   }
 
