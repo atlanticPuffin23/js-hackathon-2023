@@ -10,7 +10,6 @@ export default class GameOverScene extends Phaser.Scene {
   }
 
   init(data) {
-    console.log('data', data);
     this.winnerId = data.winner;
     this.loserId = data.loser;
   }

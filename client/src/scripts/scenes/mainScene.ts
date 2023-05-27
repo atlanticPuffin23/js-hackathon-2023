@@ -152,10 +152,8 @@ export default class MainScene extends Phaser.Scene {
     this.bullets = this.physics.add.group({
       classType: Phaser.Physics.Arcade.Sprite
     });
-    
+  
     socket.on('currentPlayers', (players: Players) => {
-      console.log('players', players);
-
       Object.keys(players).forEach((playerId) => {
         const player = players[playerId];
 
@@ -163,7 +161,6 @@ export default class MainScene extends Phaser.Scene {
           this.addPlayer(player);
         } else {
           this.addOtherPlayer(player);
-          console.log(this.currentPlayer, this.otherPlayer)
         }
       });
     });
@@ -254,7 +251,6 @@ export default class MainScene extends Phaser.Scene {
 
   update() {
     if (this.currentPlayer && this.otherPlayer) {
-
       if (!this.hasAddedCollider) {
         this.currentPlayer.setPushable(false);
         this.otherPlayer.setPushable(false);
